@@ -1,8 +1,11 @@
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 from sqlalchemy import (
+    Boolean,
     Date,
+    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -103,3 +106,16 @@ class Dividend(Base):
     dividend_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     company = relationship("Company", back_populates="dividends")
+
+
+class QueryHistory(Base):
+    __tablename__ = "query_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    question: Mapped[str] = mapped_column(String, nullable=False)
+    generated_sql: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    success: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    error_msg: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(tz=timezone.utc)
+    )
