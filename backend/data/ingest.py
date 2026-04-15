@@ -86,6 +86,9 @@ def fetch_dividends(ticker: str, yf_ticker: yf.Ticker) -> Optional[pd.Series]:
         divs = yf_ticker.get_dividends(period="max")
         if divs is None or len(divs) == 0:
             return None
+        # yfinance may return a DataFrame or a Series depending on version
+        if isinstance(divs, pd.DataFrame):
+            divs = divs["Dividends"]
         return divs
     except Exception as e:
         log_failure(ticker, "dividends", str(e))
