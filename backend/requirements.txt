@@ -26,3 +26,16 @@ typing_extensions==4.15.0
 urllib3==2.6.3
 websockets==16.0
 yfinance==1.2.2
+
+# ── AI / Agent layer ──────────────────────────────────────────────────────────
+langchain
+langchain-openai
+langchain-ollama
+langchain-community
+langchain-chroma
+chromadb
+python-dotenv
+
+# ── API layer ─────────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]

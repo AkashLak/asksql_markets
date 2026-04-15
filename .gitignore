@@ -213,3 +213,6 @@ __marimo__/
 
 # Pipeline runtime artifacts
 backend/data/ingest_failures.json
+
+# Chroma vector store (rebuilt automatically from schema definitions)
+backend/data/chroma_schema/
