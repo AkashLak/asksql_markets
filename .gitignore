@@ -210,6 +210,8 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 *.db
+*.db-shm
+*.db-wal
 
 # Pipeline runtime artifacts
 backend/data/ingest_failures.json
