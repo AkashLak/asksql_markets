@@ -1,0 +1,261 @@
+[
+  {
+    "id": 1,
+    "category": "companies",
+    "question": "How many companies are in the S&P 500 database?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT COUNT(*) FROM companies",
+    "row_count": 1,
+    "elapsed_s": 9.66
+  },
+  {
+    "id": 2,
+    "category": "companies",
+    "question": "How many companies are in each sector?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT COUNT(*) ,  c.sector FROM companies c GROUP BY c.sector",
+    "row_count": 12,
+    "elapsed_s": 10.33
+  },
+  {
+    "id": 3,
+    "category": "companies",
+    "question": "Which company has the ticker AAPL?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT company_name FROM companies WHERE ticker = 'AAPL';",
+    "row_count": 1,
+    "elapsed_s": 10.33
+  },
+  {
+    "id": 4,
+    "category": "prices",
+    "question": "What are the top 5 stocks by closing price today?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT p.ticker, c.company_name, p.close\nFROM prices p\nJOIN companies c ON p.ticker = c.ticker\nWHERE p.date = (SELECT MAX(date) FROM prices)\nORDER BY p.close DESC\nLIMIT 5;",
+    "row_count": 5,
+    "elapsed_s": 14.08
+  },
+  {
+    "id": 5,
+    "category": "prices",
+    "question": "What was Apple's closing price on the most recent trading day?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT p.close\nFROM prices p\nJOIN companies c ON p.ticker = c.ticker\nWHERE p.date = (SELECT MAX(date) FROM prices)\nAND c.ticker = 'AAPL'",
+    "row_count": 1,
+    "elapsed_s": 12.08
+  },
+  {
+    "id": 6,
+    "category": "prices",
+    "question": "What was the average daily trading volume for Tesla in 2023?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT AVG(p.volume) AS avg_daily_volume\nFROM prices p\nWHERE p.ticker = 'TSLA'\n  AND p.date >= date('now', '-1 year')\n  AND p.date < date('now')",
+    "row_count": 1,
+    "elapsed_s": 10.94
+  },
+  {
+    "id": 7,
+    "category": "prices",
+    "question": "How many distinct trading dates exist in the prices table?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT COUNT(DISTINCT date) FROM prices",
+    "row_count": 1,
+    "elapsed_s": 8.77
+  },
+  {
+    "id": 8,
+    "category": "financials",
+    "question": "Which company had the highest revenue in 2024?",
+    "verdict": "PARTIAL",
+    "failures": [
+      "Result missing expected column 'ticker' (got: ['company_name', 'total_revenue_billions'])"
+    ],
+    "sql": "SELECT c.company_name, SUM(f.revenue) / 1e9 AS total_revenue_billions\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE f.year = 2024\nGROUP BY c.company_name\nORDER BY total_revenue_billions DESC\nLIMIT 1;",
+    "row_count": 1,
+    "elapsed_s": 12.02
+  },
+  {
+    "id": 9,
+    "category": "financials",
+    "question": "What was Microsoft's profit margin in 2023?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT f.profit_margin\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE c.company_name = 'Microsoft Corporation'\n  AND f.year = 2023;",
+    "row_count": 1,
+    "elapsed_s": 10.08
+  },
+  {
+    "id": 10,
+    "category": "financials",
+    "question": "How many companies reported a net loss in 2023?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT COUNT(c.ticker) \nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE f.year = 2023 AND f.net_income < 0",
+    "row_count": 1,
+    "elapsed_s": 10.37
+  },
+  {
+    "id": 11,
+    "category": "financials",
+    "question": "What is the average EPS for technology companies in 2024?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT AVG(f.eps) AS avg_eps\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE c.sector = 'Technology'\n  AND f.year = 2024;",
+    "row_count": 1,
+    "elapsed_s": 10.99
+  },
+  {
+    "id": 12,
+    "category": "dividends",
+    "question": "Show the 10 most recent dividend payments for Apple",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT d.date, d.dividend_amount\nFROM dividends d\nJOIN companies c ON d.ticker = c.ticker\nWHERE c.company_name LIKE '%Apple%' OR d.ticker = 'AAPL'\nORDER BY d.date DESC\nLIMIT 10;",
+    "row_count": 10,
+    "elapsed_s": 12.8
+  },
+  {
+    "id": 13,
+    "category": "dividends",
+    "question": "How many distinct companies paid dividends in 2023?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT COUNT(DISTINCT d.ticker) \nFROM dividends d\nWHERE STRFTIME('%Y', d.date) = '2023'",
+    "row_count": 1,
+    "elapsed_s": 9.83
+  },
+  {
+    "id": 14,
+    "category": "dividends",
+    "question": "What is the total dividend amount paid by Apple across all time?",
+    "verdict": "PARTIAL",
+    "failures": [
+      "Result missing expected column 'total' (got: ['sum(d.dividend_amount)'])",
+      "Value check failed \u2014 first row: [10.063564]"
+    ],
+    "sql": "SELECT SUM(d.dividend_amount) FROM dividends d JOIN companies c ON d.ticker = c.ticker WHERE c.company_name LIKE '%Apple%' OR d.ticker = 'AAPL'",
+    "row_count": 1,
+    "elapsed_s": 11.37
+  },
+  {
+    "id": 15,
+    "category": "join",
+    "question": "Which sector has the highest average revenue in 2024?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT c.sector, AVG(f.revenue) / 1e9 AS avg_revenue_billions\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE f.year = 2024\nGROUP BY c.sector\nORDER BY avg_revenue_billions DESC\nLIMIT 10;",
+    "row_count": 10,
+    "elapsed_s": 13.37
+  },
+  {
+    "id": 16,
+    "category": "join",
+    "question": "Which companies had a profit margin above 30% in 2023?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT c.company_name, c.sector, f.profit_margin\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE f.year = 2023 AND f.profit_margin > 0.30\nORDER BY f.profit_margin DESC\nLIMIT 100;",
+    "row_count": 38,
+    "elapsed_s": 14.96
+  },
+  {
+    "id": 17,
+    "category": "join",
+    "question": "What are the top 5 Technology companies by revenue in 2024?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT c.company_name, AVG(f.revenue) / 1e9 AS avg_revenue_billions\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE c.sector = 'Technology' AND f.year = 2024\nGROUP BY c.company_name\nORDER BY avg_revenue_billions DESC\nLIMIT 5;",
+    "row_count": 5,
+    "elapsed_s": 14.38
+  },
+  {
+    "id": 18,
+    "category": "join",
+    "question": "What is the average closing price for Healthcare stocks on the most recent trading day?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT AVG(p.close) \nFROM prices p\nJOIN companies c ON p.ticker = c.ticker\nWHERE c.sector = 'Healthcare'\nAND p.date = (SELECT MAX(date) FROM prices)",
+    "row_count": 1,
+    "elapsed_s": 11.56
+  },
+  {
+    "id": 19,
+    "category": "join",
+    "question": "How many companies in each sector paid dividends in 2023?",
+    "verdict": "PARTIAL",
+    "failures": [
+      "Result missing expected column 'count' (got: ['num_companies', 'sector'])"
+    ],
+    "sql": "SELECT COUNT(DISTINCT c.ticker) AS num_companies, c.sector \nFROM companies c\nJOIN dividends d ON c.ticker = d.ticker\nWHERE d.date >= date('now', '-1 year') AND d.date < date('now')\nGROUP BY c.sector",
+    "row_count": 11,
+    "elapsed_s": 17.64
+  },
+  {
+    "id": 20,
+    "category": "join",
+    "question": "Which Technology companies had positive EPS in 2024?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT c.company_name, c.sector, f.eps\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE f.year = 2024 AND f.eps > 0\nORDER BY f.eps DESC\nLIMIT 100;",
+    "row_count": 100,
+    "elapsed_s": 15.07
+  },
+  {
+    "id": 21,
+    "category": "join",
+    "question": "List the 10 companies with the highest trading volume on the most recent trading day",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT c.company_name, p.ticker, SUM(p.volume) AS total_volume\nFROM prices p\nJOIN companies c ON p.ticker = c.ticker\nWHERE p.date = (SELECT MAX(date) FROM prices)\nGROUP BY c.company_name, p.ticker\nORDER BY total_volume DESC\nLIMIT 10;",
+    "row_count": 10,
+    "elapsed_s": 14.2
+  },
+  {
+    "id": 22,
+    "category": "aggregation",
+    "question": "What is the total revenue across all S&P 500 companies in 2024?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT SUM(f.revenue) / 1e9 AS total_revenue_billions\nFROM financials f\nJOIN companies c ON f.ticker = c.ticker\nWHERE f.year = 2024",
+    "row_count": 1,
+    "elapsed_s": 12.06
+  },
+  {
+    "id": 23,
+    "category": "aggregation",
+    "question": "Which year had the highest average profit margin across all companies?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT MAX(f.year) AS highest_profit_margin_year, AVG(f.profit_margin) / 100 AS avg_profit_margin\nFROM financials f\nGROUP BY f.year\nORDER BY avg_profit_margin DESC\nLIMIT 1;",
+    "row_count": 1,
+    "elapsed_s": 10.43
+  },
+  {
+    "id": 24,
+    "category": "aggregation",
+    "question": "What is the highest single-day closing price ever recorded in the database?",
+    "verdict": "PASS",
+    "failures": [],
+    "sql": "SELECT MAX(p.close) FROM prices p",
+    "row_count": 1,
+    "elapsed_s": 8.98
+  },
+  {
+    "id": 25,
+    "category": "cannot_answer",
+    "question": "What will Apple's stock price be next week?",
+    "verdict": "FAIL",
+    "failures": [
+      "Expected CANNOT_ANSWER but agent returned SQL"
+    ],
+    "sql": "SELECT p.close\nFROM prices p\nWHERE p.ticker = 'AAPL'\nAND p.date = date('now', '+1 week')",
+    "row_count": 0,
+    "elapsed_s": 10.33
+  }
+]
