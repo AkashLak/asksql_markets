@@ -67,7 +67,7 @@ _SCHEMA_DOCS = [
             "Columns:\n"
             "  id            INTEGER PRIMARY KEY\n"
             "  ticker        TEXT FK → companies.ticker\n"
-            "  year          INTEGER — fiscal year (e.g. 2022, 2023, 2024, 2025)\n"
+            "  year          INTEGER — the column is named 'year', NOT 'fiscal_year' (e.g. 2022, 2023, 2024, 2025)\n"
             "  revenue       REAL    — total annual revenue in RAW DOLLARS (not millions/billions)\n"
             "  net_income    REAL    — net income in RAW DOLLARS\n"
             "  eps           REAL    — earnings per share in USD\n"

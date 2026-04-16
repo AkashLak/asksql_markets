@@ -4,7 +4,7 @@ AskSQL Markets — NL-to-SQL agent.
 Two-step pipeline that works reliably with both small local models (Ollama)
 and cloud models (OpenAI):
   1. Generate SQL  — LLM receives schema context + question, returns only SQL
-  2. Execute SQL   — run against SQLite, get structured results
+  2. Execute SQL   — run against SQLite, get structured results (with retry on error)
   3. Explain       — LLM receives question + results, returns plain-English answer
 
 This avoids the ReAct agent loop (Thought/Action/Observation format) which
@@ -15,13 +15,20 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from .llm_factory import get_llm_and_embeddings
 from .schema_store import get_schema_context
+
+# Hard cap on rows returned to the UI — prevents cartesian-product floods
+# when the LLM omits LIMIT on multi-table joins.
+MAX_RESULT_ROWS = 200
+
+# How many times to ask the LLM to fix broken SQL before giving up.
+MAX_SQL_RETRIES = 2
 
 _FORBIDDEN_RE = re.compile(
     r"\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE)\b",
@@ -41,12 +48,16 @@ RULES:
 2. Only SELECT statements are allowed. Never write INSERT, UPDATE, DELETE, DROP, ALTER, or CREATE.
 3. Always include LIMIT 100 unless the query is a single-row aggregation.
 4. Use the exact table and column names from the schema above.
-5. Revenue and net_income are stored in raw dollars (divide by 1e9 for billions).
-6. profit_margin is a decimal (0.25 = 25%).
+5. revenue and net_income are stored in raw dollars — divide by 1e9 to get billions.
+   eps is already in USD per share — do NOT divide by 1e9.
+   profit_margin is a decimal (0.25 = 25%) — do NOT multiply by 100.
 7. This is SQLite — use SQLite date functions, NOT PostgreSQL syntax:
    - CORRECT:   date('now', '-2 years')  or  date('now', '-1 month')
    - INCORRECT: DATE 'now' - INTERVAL '2 year'  (this is PostgreSQL, will fail)
 8. If the question cannot be answered with the available data, return exactly: CANNOT_ANSWER
+9. Common column name mistakes to avoid:
+   - financials year column: use f.year  — NEVER f.fiscal_year (that column does not exist)
+   - sector filter: use c.sector = 'Technology'  — NEVER 'tech' or 'technology' (case-sensitive)
 """
 
 _EXPLAIN_SYSTEM_PROMPT = """\
@@ -97,11 +108,50 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
         else:
             generated_sql = raw_sql
 
-            # ── Step 2: Execute SQL ───────────────────────────────────────────
-            with engine.connect() as conn:
-                result_proxy = conn.execute(text(generated_sql))
-                columns = list(result_proxy.keys())
-                results = [list(row) for row in result_proxy.fetchall()]
+            # ── Step 2: Execute SQL (with retry on failure) ───────────────────
+            sql_messages_so_far = sql_messages + [AIMessage(content=generated_sql)]
+            last_exc: Exception | None = None
+
+            for attempt in range(MAX_SQL_RETRIES + 1):
+                try:
+                    with engine.connect() as conn:
+                        result_proxy = conn.execute(text(generated_sql))
+                        columns = list(result_proxy.keys())
+                        raw_rows = result_proxy.fetchall()
+
+                    # Cap rows so cartesian-product queries don't flood the UI
+                    truncated = len(raw_rows) > MAX_RESULT_ROWS
+                    results = [list(row) for row in raw_rows[:MAX_RESULT_ROWS]]
+                    if truncated:
+                        # Append a sentinel row the UI can detect and display as a notice
+                        results.append([f"… results capped at {MAX_RESULT_ROWS} rows"] + [""] * (len(columns) - 1))
+
+                    last_exc = None
+                    break  # success — exit retry loop
+
+                except Exception as exc:
+                    last_exc = exc
+                    if attempt < MAX_SQL_RETRIES:
+                        # Feed the error back and ask the LLM to fix the SQL
+                        sql_messages_so_far = sql_messages_so_far + [
+                            HumanMessage(
+                                content=(
+                                    f"That SQL failed with this error:\n{exc}\n\n"
+                                    "Fix the SQL and return only the corrected query — "
+                                    "no explanation, no markdown fences."
+                                )
+                            )
+                        ]
+                        fix_response = llm.invoke(sql_messages_so_far)
+                        fixed_sql = fix_response.content.strip()
+                        fence_match = _SQL_FENCE_RE.search(fixed_sql)
+                        if fence_match:
+                            fixed_sql = fence_match.group(1).strip()
+                        generated_sql = fixed_sql
+                        sql_messages_so_far = sql_messages_so_far + [AIMessage(content=generated_sql)]
+
+            if last_exc is not None:
+                raise last_exc
 
             # ── Step 3: Explain results ───────────────────────────────────────
             results_preview = _format_results_for_prompt(columns, results)
