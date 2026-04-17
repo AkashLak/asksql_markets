@@ -1,63 +1,97 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background: #07080f;
+  background: #05050e;
   color: #e2e8f0;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
+#root { min-height: 100vh; }
 
-#root {
-  min-height: 100vh;
-}
-
-.hero-bg {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 58, 237, 0.18) 0%, transparent 70%),
-    #07080f;
-}
-
-.grid-bg {
+/* ── Grid overlay ── */
+.grid-overlay {
   background-image:
-    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+  background-size: 52px 52px;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 
+/* ── Animated gradient blobs ── */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  pointer-events: none;
+}
+.blob-1 {
+  width: 640px; height: 640px;
+  background: rgba(76, 29, 149, 0.45);
+  top: -180px; left: -140px;
+  animation: blob1 13s ease-in-out infinite alternate;
+}
+.blob-2 {
+  width: 520px; height: 520px;
+  background: rgba(55, 17, 140, 0.35);
+  bottom: -160px; right: -120px;
+  animation: blob2 17s ease-in-out infinite alternate;
+}
+.blob-3 {
+  width: 420px; height: 420px;
+  background: rgba(109, 40, 217, 0.25);
+  top: 40%; left: 45%;
+  animation: blob3 11s ease-in-out infinite alternate;
+}
+
+@keyframes blob1 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(90px, 70px) scale(1.25); }
+}
+@keyframes blob2 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-70px, -90px) scale(1.2); }
+}
+@keyframes blob3 {
+  from { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) scale(1.35) rotate(25deg); }
+}
+
+/* ── Gradient text ── */
 .gradient-text {
-  background: linear-gradient(135deg, #a78bfa 0%, #818cf8 40%, #c4b5fd 100%);
+  background: linear-gradient(125deg, #c4b5fd 0%, #a78bfa 30%, #818cf8 65%, #e0d7ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.card {
-  background: rgba(15, 17, 28, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(8px);
+/* ── Cards ── */
+.glass-card {
+  background: rgba(10, 8, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(14px);
 }
 
-.card-hover {
-  transition: border-color 0.2s;
-}
-.card-hover:hover {
-  border-color: rgba(139, 92, 246, 0.3);
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+/* ── Input glow ── */
+.input-glow:focus-within {
+  border-color: rgba(139, 92, 246, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 24px rgba(109, 40, 217, 0.2);
 }
 
-.loading-dot {
-  animation: pulse-dot 1.2s ease-in-out infinite;
+/* ── Loading dots ── */
+@keyframes bounce-dot {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40%            { transform: translateY(-9px); opacity: 1; }
 }
-.loading-dot:nth-child(2) { animation-delay: 0.2s; }
-.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+.dot-1 { animation: bounce-dot 1.4s ease-in-out infinite; }
+.dot-2 { animation: bounce-dot 1.4s ease-in-out 0.16s infinite; }
+.dot-3 { animation: bounce-dot 1.4s ease-in-out 0.32s infinite; }
+
+/* ── Table rows ── */
+.results-table tbody tr { transition: background 0.12s; }
+.results-table tbody tr:hover td { background: rgba(109, 40, 217, 0.09); }
