@@ -1,48 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { askQuestion } from './api'
 import type { AskResponse } from './types'
-import { QuestionInput } from './components/QuestionInput'
+import { SearchBar } from './components/SearchBar'
 import { SqlDisplay } from './components/SqlDisplay'
 import { ResultsTable } from './components/ResultsTable'
-import { ExplanationCard } from './components/ExplanationCard'
+import { AnswerCard } from './components/AnswerCard'
+import { DataChart } from './components/DataChart'
 
 type Status = 'idle' | 'loading' | 'done' | 'error'
 
-// Simple guard: catch greetings and very short non-data phrases before hitting the API
-const NON_QUERY_RE = /^(hi+|hello|hey|sup|yo|test|ok|okay|thanks|bye|lol|hm+|what|why|how)\s*[!?.]*$/i
-
-function isNonDataQuery(q: string): boolean {
+const NON_QUERY_RE = /^(hi+|hello|hey|sup|yo|test|ok|okay|thanks|bye|lol|hm+)\s*[!?.]*$/i
+function isNonDataQuery(q: string) {
   return NON_QUERY_RE.test(q.trim()) || q.trim().split(/\s+/).length < 2
 }
 
+const viewAnim = {
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.32 } },
+  exit:    { opacity: 0, y: -8, transition: { duration: 0.18 } },
+}
+
+const LOADING_MSGS = ['Generating SQL…', 'Querying financial data…', 'Analyzing results…', 'Almost there…']
+
 export default function App() {
-  const [status, setStatus] = useState<Status>('idle')
-  const [result, setResult] = useState<AskResponse | null>(null)
-  const [fetchError, setFetchError] = useState<string | null>(null)
-  const [lastQuestion, setLastQuestion] = useState<string>('')
+  const [status, setStatus]             = useState<Status>('idle')
+  const [result, setResult]             = useState<AskResponse | null>(null)
+  const [fetchError, setFetchError]     = useState<string | null>(null)
+  const [lastQuestion, setLastQuestion] = useState('')
+  const [msgIdx, setMsgIdx]             = useState(0)
+
+  useEffect(() => {
+    if (status !== 'loading') return
+    const id = setInterval(() => setMsgIdx(i => (i + 1) % LOADING_MSGS.length), 1600)
+    return () => clearInterval(id)
+  }, [status])
 
   async function handleQuestion(question: string) {
     if (isNonDataQuery(question)) {
       setLastQuestion(question)
-      setResult(null)
-      setFetchError(null)
+      setResult({ sql: null, columns: [], results: [], explanation: "I can only answer questions about S&P 500 data — try asking about stock prices, revenues, dividends, or sectors.", success: true, error: null })
       setStatus('done')
-      // Synthesise a friendly "can't answer" response without calling the API
-      setResult({
-        sql: null,
-        columns: [],
-        results: [],
-        explanation: "I can only answer questions about S&P 500 data — try asking about stock prices, revenues, dividends, or sectors.",
-        success: true,
-        error: null,
-      })
       return
     }
-
     setStatus('loading')
     setResult(null)
     setFetchError(null)
     setLastQuestion(question)
+    setMsgIdx(0)
     try {
       const data = await askQuestion(question)
       setResult(data)
@@ -53,126 +58,186 @@ export default function App() {
     }
   }
 
-  const isIdle = status === 'idle'
-
   return (
-    <div className={`min-h-screen flex flex-col ${isIdle ? 'hero-bg grid-bg' : 'bg-[#07080f]'}`}>
+    <div className="min-h-screen relative bg-[#05050e]">
+      {/* Animated blobs */}
+      <div className="fixed inset-0 overflow-hidden z-0">
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="blob blob-3" />
+      </div>
+      {/* Grid overlay */}
+      <div className="grid-overlay" />
 
-      {/* ── Header (results mode only) ── */}
-      {!isIdle && (
-        <header className="border-b border-white/[0.06] px-6 py-3 sticky top-0 z-10 bg-[#07080f]/90 backdrop-blur">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-slate-100 tracking-tight">
-                AskSQL <span className="gradient-text">Markets</span>
-              </span>
-            </div>
-            <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-              Live
-            </span>
-          </div>
-        </header>
-      )}
+      <div className="relative z-10 min-h-screen flex flex-col">
 
-      {/* ── Idle hero ── */}
-      {isIdle && (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-24">
-          <div className="w-full max-w-2xl flex flex-col items-center gap-6">
+        {/* Compact header — shown on non-idle */}
+        <AnimatePresence>
+          {status !== 'idle' && (
+            <motion.header
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.25 } }}
+              exit={{ opacity: 0 }}
+              className="sticky top-0 z-20 border-b border-white/[0.07] bg-[#05050e]/85 backdrop-blur"
+            >
+              <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
+                <span className="text-sm font-bold text-slate-100 tracking-tight">
+                  AskSQL <span className="gradient-text">Markets</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live
+                </span>
+              </div>
+            </motion.header>
+          )}
+        </AnimatePresence>
 
-            {/* Badge */}
-            <span className="text-xs px-3 py-1 rounded-full bg-violet-950/60 border border-violet-700/40 text-violet-300">
-              S&amp;P 500 · Real financial data
-            </span>
+        <AnimatePresence mode="wait">
 
-            {/* Title */}
-            <div className="text-center space-y-2">
-              <h1 className="text-5xl font-bold tracking-tight">
-                <span className="gradient-text">AskSQL</span>{' '}
-                <span className="text-slate-100">Markets</span>
-              </h1>
-              <p className="text-slate-400 text-lg">
-                Ask anything about S&amp;P 500 companies in plain English.
-              </p>
-            </div>
+          {/* ── IDLE ── */}
+          {status === 'idle' && (
+            <motion.div key="idle" {...viewAnim}
+              className="min-h-screen flex flex-col items-center justify-center px-6"
+            >
+              <div className="w-full max-w-3xl flex flex-col items-center gap-6 text-center">
 
-            {/* Input */}
-            <div className="w-full">
-              <QuestionInput onSubmit={handleQuestion} loading={false} hero />
-            </div>
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1, transition: { delay: 0.05 } }}
+                  className="text-xs px-3 py-1 rounded-full bg-violet-950/70 border border-violet-600/40 text-violet-300 tracking-wide"
+                >
+                  S&amp;P 500 · Real financial data · AI-powered
+                </motion.span>
 
-            {/* Stats row */}
-            <div className="flex items-center gap-6 text-xs text-slate-500">
-              {[
-                ['503', 'companies'],
-                ['5 yrs', 'price history'],
-                ['~49k', 'dividend records'],
-                ['4 yrs', 'financials'],
-              ].map(([val, label]) => (
-                <div key={label} className="text-center">
-                  <div className="text-slate-300 font-semibold">{val}</div>
-                  <div>{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+                <motion.div
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.45 } }}
+                >
+                  <h1 className="text-8xl font-black tracking-tight leading-[1.05]">
+                    <span className="gradient-text">AskSQL</span>
+                    <br />
+                    <span className="text-slate-200 text-6xl font-bold">Markets</span>
+                  </h1>
+                  <p className="mt-4 text-slate-500 text-base">
+                    Query S&amp;P 500 data in plain English. No SQL required.
+                  </p>
+                </motion.div>
 
-      {/* ── Results mode ── */}
-      {!isIdle && (
-        <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-6 flex flex-col gap-5">
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.4 } }}
+                  className="w-full mt-10"
+                >
+                  <SearchBar onSubmit={handleQuestion} loading={false} autoFocus />
+                </motion.div>
 
-          {/* Input bar */}
-          <QuestionInput onSubmit={handleQuestion} loading={status === 'loading'} hero={false} />
+                {/* Stats row */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { delay: 0.38 } }}
+                  className="w-full"
+                >
+                  <div className="border-t border-white/[0.07] pt-6 mt-8 flex justify-center gap-12">
+                    {[['503', 'companies'], ['5 yrs', 'price history'], ['~49k', 'dividend records'], ['4 yrs', 'financials']].map(([v, l]) => (
+                      <div key={l} className="text-center">
+                        <div className="text-white font-bold text-2xl tracking-tight">{v}</div>
+                        <div className="text-slate-500 text-sm mt-1">{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
 
-          {/* Loading */}
+          {/* ── LOADING ── */}
           {status === 'loading' && (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <div className="flex gap-1.5">
-                <span className="loading-dot w-2 h-2 rounded-full bg-violet-500" />
-                <span className="loading-dot w-2 h-2 rounded-full bg-violet-500" />
-                <span className="loading-dot w-2 h-2 rounded-full bg-violet-500" />
-              </div>
-              <p className="text-xs text-slate-500">Generating SQL and querying database…</p>
-            </div>
-          )}
-
-          {/* Network error */}
-          {status === 'error' && fetchError && (
-            <div className="card rounded-xl px-5 py-4 border-red-900/50">
-              <p className="text-sm font-medium text-red-400 mb-1">Connection error</p>
-              <p className="text-sm text-red-300/70">{fetchError}</p>
-            </div>
-          )}
-
-          {/* Results */}
-          {status === 'done' && result && (
-            <div className="flex flex-col gap-4">
-              {/* Question echo */}
-              <div className="flex items-start gap-2.5">
-                <div className="mt-0.5 w-5 h-5 rounded-full bg-violet-600/30 border border-violet-500/40 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[10px] text-violet-300 font-bold">Q</span>
+            <motion.div key="loading" {...viewAnim}
+              className="min-h-screen flex flex-col w-full items-center px-6 pt-8 pb-12"
+            >
+              <div className="w-full max-w-4xl flex flex-col gap-6">
+                <SearchBar onSubmit={handleQuestion} loading={true} defaultValue={lastQuestion} />
+                <div className="flex flex-col items-center justify-center gap-4 py-14">
+                  <div className="flex items-end gap-2">
+                    <span className="dot-1 w-3 h-3 rounded-full bg-violet-500" />
+                    <span className="dot-2 w-3 h-3 rounded-full bg-violet-400" />
+                    <span className="dot-3 w-3 h-3 rounded-full bg-violet-300" />
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.p key={msgIdx}
+                      initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.22 }}
+                      className="text-sm text-slate-400"
+                    >
+                      {LOADING_MSGS[msgIdx]}
+                    </motion.p>
+                  </AnimatePresence>
+                  <p className="text-xs text-slate-600 max-w-sm text-center">{lastQuestion}</p>
                 </div>
-                <p className="text-slate-200 text-sm leading-relaxed">{lastQuestion}</p>
               </div>
-
-              <ExplanationCard
-                explanation={result.explanation}
-                success={result.success}
-                error={result.error}
-                hasData={result.columns.length > 0}
-              />
-
-              {result.sql && <SqlDisplay sql={result.sql} />}
-
-              {result.columns.length > 0 && (
-                <ResultsTable columns={result.columns} results={result.results} />
-              )}
-            </div>
+            </motion.div>
           )}
-        </main>
-      )}
+
+          {/* ── RESULTS ── */}
+          {(status === 'done' || status === 'error') && (
+            <motion.div key="results" {...viewAnim}
+              className="min-h-screen flex flex-col items-center w-full pt-8 pb-12"
+            >
+              <div className="w-full max-w-4xl mx-auto flex flex-col gap-5 px-6">
+
+                <SearchBar onSubmit={handleQuestion} loading={false} />
+
+                {status === 'error' && fetchError && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="glass-card rounded-2xl px-5 py-4"
+                  >
+                    <p className="text-sm font-semibold text-red-400 mb-1">Connection error</p>
+                    <p className="text-sm text-red-300/60">{fetchError}</p>
+                  </motion.div>
+                )}
+
+                {status === 'done' && result && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.04 }}
+                      className="flex justify-end"
+                    >
+                      <div className="max-w-xl bg-violet-600/20 border border-violet-500/30 rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-slate-200">
+                        {lastQuestion}
+                      </div>
+                    </motion.div>
+
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                      <AnswerCard explanation={result.explanation} success={result.success} error={result.error} />
+                    </motion.div>
+
+                    {result.columns.length > 0 && result.results.length >= 2 && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+                        <DataChart columns={result.columns} results={result.results} question={lastQuestion} />
+                      </motion.div>
+                    )}
+
+                    {result.sql && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+                        <SqlDisplay sql={result.sql} />
+                      </motion.div>
+                    )}
+
+                    {result.columns.length > 0 && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+                        <ResultsTable columns={result.columns} results={result.results} />
+                      </motion.div>
+                    )}
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
