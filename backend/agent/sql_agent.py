@@ -51,13 +51,17 @@ RULES:
 5. revenue and net_income are stored in raw dollars — divide by 1e9 to get billions.
    eps is already in USD per share — do NOT divide by 1e9.
    profit_margin is a decimal (0.25 = 25%) — do NOT multiply by 100.
-7. This is SQLite — use SQLite date functions, NOT PostgreSQL syntax:
+6. This is SQLite — use SQLite date functions, NOT PostgreSQL syntax:
    - CORRECT:   date('now', '-2 years')  or  date('now', '-1 month')
    - INCORRECT: DATE 'now' - INTERVAL '2 year'  (this is PostgreSQL, will fail)
-8. If the question cannot be answered with the available data, return exactly: CANNOT_ANSWER
-9. Common column name mistakes to avoid:
+7. If the question cannot be answered with the available data, return exactly: CANNOT_ANSWER
+8. Common column name mistakes to avoid:
    - financials year column: use f.year  — NEVER f.fiscal_year (that column does not exist)
    - sector filter: use c.sector = 'Technology'  — NEVER 'tech' or 'technology' (case-sensitive)
+   - volume column: use p.volume from the prices table  — NEVER f.volume (financials has no volume column)
+   - profit margin: use f.profit_margin from financials  — NEVER c.profit_margin (companies has no profit_margin column)
+   - closing price: the column is p.close  — NEVER p.closing_price (that column does not exist)
+   - "S&P 500 companies" means all rows — do NOT filter by sector = 'S&P 500' (not a valid sector value)
 """
 
 _EXPLAIN_SYSTEM_PROMPT = """\

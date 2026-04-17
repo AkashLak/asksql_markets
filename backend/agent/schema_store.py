@@ -171,6 +171,54 @@ _SCHEMA_DOCS = [
         ),
         metadata={"type": "example"},
     ),
+    Document(
+        page_content=(
+            "Example: 'How many companies in each sector paid dividends in 2023?'\n"
+            "SQL:\n"
+            "SELECT c.sector, COUNT(DISTINCT d.ticker) AS count\n"
+            "FROM dividends d\n"
+            "JOIN companies c ON d.ticker = c.ticker\n"
+            "WHERE d.date >= '2023-01-01' AND d.date < '2024-01-01'\n"
+            "GROUP BY c.sector\n"
+            "ORDER BY count DESC;"
+        ),
+        metadata={"type": "example"},
+    ),
+    Document(
+        page_content=(
+            "Example: 'What is the total dividend amount paid by a company across all time?'\n"
+            "SQL:\n"
+            "SELECT SUM(d.dividend_amount) AS total\n"
+            "FROM dividends d\n"
+            "WHERE d.ticker = 'AAPL';"
+        ),
+        metadata={"type": "example"},
+    ),
+    Document(
+        page_content=(
+            "Example: 'List the 10 companies with the highest trading volume on the most recent trading day'\n"
+            "SQL:\n"
+            "SELECT p.ticker, c.company_name, p.volume\n"
+            "FROM prices p\n"
+            "JOIN companies c ON p.ticker = c.ticker\n"
+            "WHERE p.date = (SELECT MAX(date) FROM prices)\n"
+            "ORDER BY p.volume DESC\n"
+            "LIMIT 10;"
+        ),
+        metadata={"type": "example"},
+    ),
+    Document(
+        page_content=(
+            "Example: 'What is the total revenue across all S&P 500 companies in 2024?'\n"
+            "Note: 'S&P 500 companies' means ALL rows in financials — there is no sector called "
+            "'S&P 500', so do NOT add a WHERE sector filter.\n"
+            "SQL:\n"
+            "SELECT SUM(f.revenue) / 1e9 AS total\n"
+            "FROM financials f\n"
+            "WHERE f.year = 2024;"
+        ),
+        metadata={"type": "example"},
+    ),
 ]
 
 
