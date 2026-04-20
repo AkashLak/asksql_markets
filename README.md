@@ -192,4 +192,4 @@ Key environment variables:
 | `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` | Render | Set to `python` - required for chromadb/protobuf compatibility on Render |
 | `VITE_API_URL` | Vercel | Render backend URL |
 
-> ⚠️ Render free tier spins down after 15 min of inactivity - first request after idle takes ~50s to wake up. Subsequent requests are fast.
+> ⚠️ Render free tier spins down after 15 min of inactivity - first request after idle takes 50s to wake up. Subsequent requests are fast.
