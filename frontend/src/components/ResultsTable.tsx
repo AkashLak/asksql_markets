@@ -8,7 +8,7 @@ function formatCell(val: string | number | null): string {
     if (Math.abs(val) >= 1e9)  return (val / 1e9).toLocaleString('en-US', { maximumFractionDigits: 2 }) + 'B'
     if (Math.abs(val) >= 1e6)  return (val / 1e6).toLocaleString('en-US', { maximumFractionDigits: 2 }) + 'M'
     if (Math.abs(val) >= 1000) return val.toLocaleString('en-US', { maximumFractionDigits: 2 })
-    if (!Number.isInteger(val)) return Number(val.toPrecision(4)).toString()
+    if (!Number.isInteger(val)) return Number(val.toFixed(2)).toString()
     return val.toString()
   }
   return String(val)
@@ -38,7 +38,7 @@ export function ResultsTable({ columns, results }: Props) {
   )
 
   return (
-    <div className="glass-card rounded-2xl overflow-x-auto results-table">
+    <div className="glass-card rounded-2xl results-table">
       {/* Header bar */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] bg-white/[0.02]">
         <div className="flex items-center gap-2">
