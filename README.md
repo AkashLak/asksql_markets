@@ -8,7 +8,7 @@ A natural-language-to-SQL interface over S&P 500 financial data. Ask questions i
 
 ## 📸 Screenshots
 
-![Landing page](docs/landing.png)
+<img src="assets/landing.png" width="800" alt="AskSQL Landing"/>
 
 ![Query result](docs/results.png)
 
