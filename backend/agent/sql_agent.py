@@ -36,6 +36,13 @@ _FORBIDDEN_RE = re.compile(
 )
 _SQL_FENCE_RE = re.compile(r"```(?:sql)?\s*([\s\S]*?)```", re.IGNORECASE)
 
+# Questions about future events or predictions can't be answered with historical data
+_FUTURE_RE = re.compile(
+    r"\b(will\s+\w+|predict|forecast|next\s+(week|month|year|quarter)|"
+    r"future\s+(price|revenue|stock|performance)|going\s+to\s+be|tomorrow['']?s)\b",
+    re.IGNORECASE,
+)
+
 _SQL_SYSTEM_PROMPT = """\
 You are a SQL expert for a financial database called AskSQL Markets.
 Your job is to convert a natural language question into a single valid SQLite SELECT query.
@@ -55,6 +62,11 @@ RULES:
    - CORRECT:   date('now', '-2 years')  or  date('now', '-1 month')
    - INCORRECT: DATE 'now' - INTERVAL '2 year'  (this is PostgreSQL, will fail)
 7. If the question cannot be answered with the available data, return exactly: CANNOT_ANSWER
+   Examples that require CANNOT_ANSWER:
+   - "What will Apple's stock price be next week?" → future prediction, no future data exists
+   - "Which company will have the highest revenue in 2026?" → future prediction
+   - "What is the sentiment on Tesla stock?" → no sentiment data in the database
+   - "Compare Apple to Samsung" → Samsung is not an S&P 500 company in the database
 8. Common column name mistakes to avoid:
    - financials year column: use f.year  — NEVER f.fiscal_year (that column does not exist)
    - sector filter: use c.sector = 'Technology'  — NEVER 'tech' or 'technology' (case-sensitive)
@@ -65,10 +77,16 @@ RULES:
 """
 
 _EXPLAIN_SYSTEM_PROMPT = """\
-You are AskSQL Markets, a helpful financial data assistant.
-Given a user question, the SQL that was run, and the results returned, write a concise
-natural language answer (2-4 sentences). Focus on the insight, not the mechanics.
-Do not repeat the SQL. Use plain English suitable for a non-technical user.
+You are AskSQL Markets, a financial data assistant with expertise in S&P 500 companies.
+Given a user question, the SQL that was run, and the results, write a clear and insightful answer.
+
+Guidelines:
+- Lead with the direct answer to the question (the key finding).
+- Highlight standout values — the highest, lowest, or most surprising result.
+- When amounts are large, express them naturally (e.g. "$2.4 trillion", not "$2400000000000").
+- Keep it to 2-4 sentences. Be specific — name companies, sectors, or figures when relevant.
+- Do not mention SQL, databases, or technical details. Write for a non-technical reader.
+- If results are empty, say clearly that no data matched the criteria.
 """
 
 
@@ -77,8 +95,6 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
     Convert a natural language question to SQL, execute it, and explain the results.
     Logs every attempt to query_history.
     """
-    from data.models import QueryHistory
-
     llm, _ = get_llm_and_embeddings()
     schema_context = get_schema_context(question)
 
@@ -90,6 +106,20 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
     explanation = ""
 
     try:
+        # ── Pre-check: reject future/prediction questions immediately ─────────
+        if _FUTURE_RE.search(question):
+            explanation = "This database only contains historical data and can't answer questions about future prices, revenue, or predictions."
+            success = True
+            _log_query(engine, question, None, True, None)
+            return {
+                "sql": None,
+                "columns": [],
+                "results": [],
+                "explanation": explanation,
+                "success": True,
+                "error": None,
+            }
+
         # ── Step 1: Generate SQL ──────────────────────────────────────────────
         sql_messages = [
             SystemMessage(content=_SQL_SYSTEM_PROMPT.format(schema_context=schema_context)),
@@ -177,7 +207,26 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
         error_msg = str(exc)
         explanation = f"Something went wrong while answering your question: {error_msg}"
 
-    # ── Log to query_history ──────────────────────────────────────────────────
+    _log_query(engine, question, generated_sql, success, error_msg)
+
+    return {
+        "sql": generated_sql,
+        "columns": columns,
+        "results": results,
+        "explanation": explanation,
+        "success": success,
+        "error": error_msg,
+    }
+
+
+def _log_query(
+    engine: Engine,
+    question: str,
+    generated_sql: str | None,
+    success: bool,
+    error_msg: str | None,
+) -> None:
+    from data.models import QueryHistory
     try:
         with Session(engine) as session:
             session.add(
@@ -192,15 +241,6 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
             session.commit()
     except Exception:
         pass
-
-    return {
-        "sql": generated_sql,
-        "columns": columns,
-        "results": results,
-        "explanation": explanation,
-        "success": success,
-        "error": error_msg,
-    }
 
 
 def _format_results_for_prompt(columns: list[str], results: list[list], max_rows: int = 20) -> str:

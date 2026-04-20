@@ -219,6 +219,33 @@ _SCHEMA_DOCS = [
         ),
         metadata={"type": "example"},
     ),
+    Document(
+        page_content=(
+            "Example: 'What will Apple's stock price be next week?'\n"
+            "This question asks for a future prediction. The database only contains historical data — "
+            "there are no future prices, forecasts, or predictions available.\n"
+            "Return exactly: CANNOT_ANSWER"
+        ),
+        metadata={"type": "cannot_answer"},
+    ),
+    Document(
+        page_content=(
+            "Example: 'Which company will have the highest revenue in 2026?'\n"
+            "This question asks about a future year. The financials table only contains data up to 2025 — "
+            "future revenue cannot be predicted from historical records.\n"
+            "Return exactly: CANNOT_ANSWER"
+        ),
+        metadata={"type": "cannot_answer"},
+    ),
+    Document(
+        page_content=(
+            "Example: 'What is the analyst sentiment on Tesla?' or 'Should I buy NVDA stock?'\n"
+            "These questions require analyst ratings, sentiment data, or investment advice — "
+            "none of which exist in this database. Only OHLCV prices, financials, and dividends are available.\n"
+            "Return exactly: CANNOT_ANSWER"
+        ),
+        metadata={"type": "cannot_answer"},
+    ),
 ]
 
 
