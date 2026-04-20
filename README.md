@@ -24,8 +24,8 @@ Type a question like, "Which technology companies had the highest profit margin 
 | Frontend | React + TypeScript + Vite + Tailwind + Framer Motion |
 | Backend | Python + FastAPI + LangChain |
 | Database | SQLite (503 companies, 625k+ price rows, 5 years of data) |
-| LLM (local) | Ollama — llama3.2 + nomic-embed-text |
-| LLM (cloud) | OpenAI — gpt-4o-mini + text-embedding-3-small |
+| LLM (local) | Ollama - llama3.2 + nomic-embed-text |
+| LLM (cloud) | OpenAI - gpt-4o-mini + text-embedding-3-small |
 | Vector store | Chroma (schema RAG) |
 | Deployment | Vercel (frontend) + Render (backend) |
 
@@ -77,16 +77,16 @@ SQLite at `backend/data/markets.db` (gitignored). Built by scraping Wikipedia fo
 | Table | Rows | Description |
 |-------|------|-------------|
 | `companies` | 503 | Ticker, name, sector, industry, headquarters |
-| `prices` | around 625,000 | Daily OHLCV — 5 years of history |
+| `prices` | around 625,000 | Daily OHLCV - 5 years of history |
 | `financials` | around 2,000 | Annual revenue, net income, EPS, profit margin |
 | `dividends` | around 49,000 | Full dividend history per ticker |
-| `query_history` | — | Logs every question asked |
+| `query_history` | - | Logs every question asked |
 
 ---
 
 ## 🧠 Agent Architecture
 
-Fixed generate→execute→explain pipeline (not a ReAct loop — more reliable across model sizes):
+Fixed generate→execute→explain pipeline (not a ReAct loop - more reliable across model sizes):
 
 ```
 Question
@@ -155,7 +155,7 @@ LLM_PROVIDER=ollama   #free, local (requires Ollama running)
 LLM_PROVIDER=openai   #requires OPENAI_API_KEY, uses gpt-4o-mini
 ```
 
-No code changes needed — `llm_factory.py` handles the swap automatically.
+No code changes needed - `llm_factory.py` handles the swap automatically.
 
 ---
 
@@ -189,7 +189,7 @@ Key environment variables:
 | `OPENAI_API_KEY` | Render | OpenAI API key |
 | `DB_DOWNLOAD_URL` | Render | GitHub Release asset URL for `markets.db` |
 | `FRONTEND_URL` | Render | Vercel URL (for CORS) |
-| `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` | Render | Set to `python` — required for chromadb/protobuf compatibility on Render |
+| `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` | Render | Set to `python` - required for chromadb/protobuf compatibility on Render |
 | `VITE_API_URL` | Vercel | Render backend URL |
 
-> ⚠️ Render free tier spins down after 15 min of inactivity — first request after idle takes ~50s to wake up. Subsequent requests are fast.
+> ⚠️ Render free tier spins down after 15 min of inactivity - first request after idle takes ~50s to wake up. Subsequent requests are fast.
