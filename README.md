@@ -86,10 +86,11 @@ SQLite at `backend/data/markets.db` (gitignored). Built by scraping Wikipedia fo
 
 ## 🧠 Agent Architecture
 
-Two-step pipeline (not a ReAct loop, and works reliably with small local models):
+Fixed generate→execute→explain pipeline (not a ReAct loop — more reliable across model sizes):
 
 ```
 Question
+  -> Pre-check: regex guard rejects future/prediction questions immediately
   -> Chroma RAG (top-3 schema docs + Q -> SQL examples)
   -> LLM: generate SQL
   -> SQLite execute (retry up to 2x on error, feeding error back to LLM)
@@ -97,7 +98,10 @@ Question
   -> Response
 ```
 
-Safety: forbidden keyword check blocks `INSERT`, `UPDATE`, `DELETE`, `DROP`, and other write operations. Results are capped at 200 rows.
+**Safety guards:**
+- Forbidden keyword check blocks `INSERT`, `UPDATE`, `DELETE`, `DROP`, and other write operations
+- `CANNOT_ANSWER` path handles questions outside the database scope (future predictions, sentiment, non-S&P companies)
+- Results capped at 200 rows with a UI warning to prevent cartesian-product floods
 
 ---
 
@@ -157,7 +161,7 @@ No code changes needed — `llm_factory.py` handles the swap automatically.
 
 ## 🧪 Eval Suite
 
-25 test cases covering single-table queries, multi-table joins, aggregations, and edge cases. Current baseline: **96% pass rate** with llama3.2.
+25 test cases covering single-table queries, multi-table joins, aggregations, and edge cases. Baseline with llama3.2: **84% pass / 96% usable**. Production uses OpenAI gpt-4o-mini, which scores higher across all categories.
 
 ```bash
 cd backend && source venv/bin/activate
@@ -185,6 +189,7 @@ Key environment variables:
 | `OPENAI_API_KEY` | Render | OpenAI API key |
 | `DB_DOWNLOAD_URL` | Render | GitHub Release asset URL for `markets.db` |
 | `FRONTEND_URL` | Render | Vercel URL (for CORS) |
+| `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` | Render | Set to `python` — required for chromadb/protobuf compatibility on Render |
 | `VITE_API_URL` | Vercel | Render backend URL |
 
-Note: Render free tier spins down after 15 min of inactivity, first request after idle takes around 50s to wake up.
+> ⚠️ Render free tier spins down after 15 min of inactivity — first request after idle takes ~50s to wake up. Subsequent requests are fast.
