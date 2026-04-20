@@ -6,6 +6,14 @@ A natural-language-to-SQL interface over S&P 500 financial data. Ask questions i
 
 ---
 
+## 📸 Screenshots
+
+![Landing page](docs/landing.png)
+
+![Query result](docs/results.png)
+
+---
+
 ## ✨ What it does
 
 Type a question like, "Which technology companies had the highest profit margin in 2024?", and the app:
