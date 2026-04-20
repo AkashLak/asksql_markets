@@ -7,6 +7,7 @@ Endpoints:
   GET  /schema  — returns the full schema context string used by the agent
 """
 
+import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -39,9 +40,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_frontend_url = os.getenv("FRONTEND_URL", "")
+_origins = ["http://localhost:5173"]
+if _frontend_url:
+    _origins.append(_frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten this when deploying
+    allow_origins=_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
