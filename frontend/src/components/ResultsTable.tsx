@@ -38,7 +38,7 @@ export function ResultsTable({ columns, results }: Props) {
   )
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden results-table">
+    <div className="glass-card rounded-2xl overflow-x-auto results-table">
       {/* Header bar */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] bg-white/[0.02]">
         <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export function ResultsTable({ columns, results }: Props) {
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="w-full overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="border-b border-white/[0.06]">

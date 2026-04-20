@@ -182,7 +182,7 @@ export default function App() {
           {/* ── RESULTS ── */}
           {(status === 'done' || status === 'error') && (
             <motion.div key="results" {...viewAnim}
-              className="min-h-screen flex flex-col items-center w-full pt-8 pb-12"
+              className="min-h-screen flex flex-col items-center w-full pt-8 pb-24"
             >
               <div className="w-full max-w-4xl mx-auto flex flex-col gap-5 px-6">
 
