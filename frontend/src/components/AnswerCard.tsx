@@ -29,7 +29,7 @@ export function AnswerCard({ explanation, success, error }: Props) {
   }
 
   return (
-    <div className="glass-card rounded-2xl px-5 py-4 relative overflow-hidden">
+    <div className="glass-card rounded-2xl px-5 py-4 relative">
       {/* Left gradient accent */}
       <div className="absolute left-0 inset-y-0 w-[3px] rounded-r-full
                       bg-gradient-to-b from-violet-400 via-indigo-500 to-violet-700" />
