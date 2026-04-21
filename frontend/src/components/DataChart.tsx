@@ -51,7 +51,7 @@ function truncateLabel(s: string): string {
   return s.length > 12 ? s.slice(0, 10) + '…' : s
 }
 
-// Derive a readable chart title from the column names
+//Derive a readable chart title from the column names
 function chartTitle(xKey: string, yKey: string): string {
   const fmt = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return `${fmt(yKey)} by ${fmt(xKey)}`

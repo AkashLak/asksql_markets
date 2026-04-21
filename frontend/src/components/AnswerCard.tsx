@@ -4,7 +4,7 @@ interface Props {
   error: string | null
 }
 
-// Bold any numbers / dollar amounts in the explanation text
+//Bold any numbers / dollar amounts in the explanation text
 function highlightNumbers(text: string): React.ReactNode[] {
   const parts = text.split(/(\$?[\d,]+(?:\.\d+)?(?:\s?[BMK%])?(?:\s?(?:billion|million|trillion))?)/g)
   return parts.map((part, i) => {
