@@ -1,5 +1,5 @@
 """
-Backfill the dividends table without re-running the full pipeline.
+Backfill the dividends table without re-running the full pipeline
 
 Usage:
     cd backend

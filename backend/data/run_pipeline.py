@@ -1,10 +1,10 @@
 """
-Entry point for the AskSQL Markets data ingestion pipeline.
+Entry point for the AskSQL Markets data ingestion pipeline
 
 Usage:
     cd backend
-    python -m data.run_pipeline              # full run
-    python -m data.run_pipeline --retry-failed  # only retry previously failed tickers
+    python -m data.run_pipeline              #full run
+    python -m data.run_pipeline --retry-failed  #only retry previously failed tickers
 """
 
 import argparse
@@ -42,10 +42,10 @@ from .ingest import (
 from .models import Base, get_engine
 from .scraper import scrape_sp500_wikipedia
 
-INTER_TICKER_DELAY = 1.2       # seconds between each ticker
-BATCH_COOLDOWN_EVERY = 50      # extra pause every N tickers
+INTER_TICKER_DELAY = 1.2       #seconds between each ticker
+BATCH_COOLDOWN_EVERY = 50      #extra pause every N tickers
 BATCH_COOLDOWN_SECS = 5.0
-RATE_LIMIT_BACKOFF_BASE = 10   # seconds; doubles per retry
+RATE_LIMIT_BACKOFF_BASE = 10   #seconds; doubles per retry
 RATE_LIMIT_MAX_RETRIES = 3
 
 FAILURES_PATH = Path(__file__).parent / "ingest_failures.json"
@@ -62,7 +62,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # --- Step 1: get ticker list ---
+    #--- Step 1: get ticker list ---
     if args.retry_failed:
         tickers_to_run = _load_failed_tickers()
         if not tickers_to_run:
@@ -76,13 +76,13 @@ def main() -> None:
         sp500_rows = scrape_sp500_wikipedia()
         console.print(f"  Found [bold]{len(sp500_rows)}[/] tickers\n")
 
-    # --- Step 2: initialize DB schema ---
+    #--- Step 2: initialize DB schema ---
     console.print("[bold blue]Step 2/3[/] Initializing database schema...")
     engine = get_engine()
     Base.metadata.create_all(engine)
     console.print("  Schema ready\n")
 
-    # --- Step 3: ingest ---
+    #--- Step 3: ingest ---
     console.print(f"[bold blue]Step 3/3[/] Ingesting data for {len(sp500_rows)} tickers...\n")
 
     with Progress(
@@ -108,15 +108,15 @@ def main() -> None:
             _ingest_single(ticker_str, row, engine, progress, task)
             time.sleep(INTER_TICKER_DELAY)
 
-    # --- Write failure log ---
+    #Write failure log
     failures = get_failures()
     with open(FAILURES_PATH, "w") as f:
         json.dump(failures, f, indent=2)
 
-    # --- Print summary ---
+    #Print summary
     _print_summary(engine, failures)
 
-    # --- Inline spot-checks ---
+    # Inline spot-checks
     _run_spot_checks(engine)
 
 
@@ -142,7 +142,7 @@ def _ingest_single(ticker_str: str, wiki_row: dict, engine, progress, task) -> N
             if div_series is not None:
                 bulk_insert_dividends(ticker_str, div_series, engine)
 
-            break  # success
+            break  #success
 
         except YFRateLimitError:
             if attempt < RATE_LIMIT_MAX_RETRIES:

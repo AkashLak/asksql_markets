@@ -9,7 +9,7 @@ WIKIPEDIA_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 def scrape_sp500_wikipedia() -> list[dict]:
     """
     Scrape S&P 500 company list from Wikipedia.
-    Returns list of dicts with keys: ticker, company_name, sector, industry, headquarters.
+    Returns list of dicts with keys: ticker, company_name, sector, industry, headquarters
     """
     headers = {"User-Agent": "Mozilla/5.0 (compatible; AskSQLMarkets/1.0)"}
     resp = requests.get(WIKIPEDIA_URL, headers=headers, timeout=30)
@@ -26,7 +26,7 @@ def scrape_sp500_wikipedia() -> list[dict]:
     if not rows:
         raise RuntimeError("S&P 500 table has no rows")
 
-    # Parse header row to find column indices by name (resilient to column reordering)
+    #Parse header row to find column indices by name (resilient to column reordering)
     header_cells = rows[0].find_all(["th", "td"])
     header_text = [cell.get_text(strip=True) for cell in header_cells]
 
@@ -51,7 +51,7 @@ def scrape_sp500_wikipedia() -> list[dict]:
             return cells[idx].get_text(strip=True) or None
 
         raw_ticker = cell_text("ticker") or ""
-        # Strip footnote superscripts (e.g. "GOOGL[note 1]") and normalize
+        #Strip footnote superscripts (Ex: "GOOGL[note 1]") and normalize
         ticker = re.sub(r"[^A-Z0-9\-]", "", raw_ticker.replace(".", "-").upper())
         if not ticker:
             continue
