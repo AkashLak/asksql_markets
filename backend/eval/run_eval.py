@@ -1,16 +1,16 @@
 """
-AskSQL Markets — Evaluation runner.
+AskSQL Markets - Evaluation runner
 
 Usage:
     cd backend
-    python -m eval.run_eval                     # run all 25 cases
-    python -m eval.run_eval --ids 1 5 11        # run specific cases
-    python -m eval.run_eval --category join     # run a category
+    python -m eval.run_eval                     #run all 25 cases
+    python -m eval.run_eval --ids 1 5 11        #run specific cases
+    python -m eval.run_eval --category join     #run a category
 
 Scoring:
-    PASS    — SQL ran, all structural checks pass
-    PARTIAL — SQL ran but columns/rows/value check failed
-    FAIL    — SQL error OR wrong CANNOT_ANSWER behaviour
+    PASS: SQL ran, all structural checks pass
+    PARTIAL: SQL ran but columns/rows/value check failed
+    FAIL: SQL error OR wrong CANNOT_ANSWER behaviour
 """
 
 import argparse
@@ -36,7 +36,7 @@ console = Console()
 RESULTS_PATH = Path(__file__).parent / "eval_results.json"
 
 
-# ── Scoring ───────────────────────────────────────────────────────────────────
+#--- Scoring ---
 
 def score_case(case: EvalCase, response: dict) -> tuple[str, list[str]]:
     """
@@ -49,20 +49,20 @@ def score_case(case: EvalCase, response: dict) -> tuple[str, list[str]]:
     columns = [c.lower() for c in response.get("columns", [])]
     results = response.get("results", [])
 
-    # Strip sentinel row from results for counting
+    #Strip sentinel row from results for counting
     data_rows = [
         r for r in results
         if not (r and isinstance(r[0], str) and r[0].startswith("…"))
     ]
 
-    # ── CANNOT_ANSWER cases ───────────────────────────────────────────────────
+    #--- CANNOT_ANSWER cases ---
     if not case.should_answer:
         if sql is None and success:
             return "PASS", []
         failures.append("Expected CANNOT_ANSWER but agent returned SQL")
         return "FAIL", failures
 
-    # ── Cases that should produce SQL ─────────────────────────────────────────
+    #--- Cases that should produce SQL ---
     if not success:
         failures.append(f"Query failed: {response.get('error', 'unknown error')}")
         return "FAIL", failures
@@ -71,26 +71,26 @@ def score_case(case: EvalCase, response: dict) -> tuple[str, list[str]]:
         failures.append("Agent returned CANNOT_ANSWER but a valid answer was expected")
         return "FAIL", failures
 
-    # Table references
+    #Table references
     sql_lower = sql.lower()
     for table in case.expected_tables:
         if table.lower() not in sql_lower:
             failures.append(f"SQL missing expected table '{table}'")
 
-    # Column presence in results
+    #Column presence in results
     for col in case.expected_columns:
-        # Accept partial column name match (e.g. "count" matches "count(*)" or "total_count")
+        #Accept partial column name match (Ex: "count" matches "count(*)" or "total_count")
         if not any(col.lower() in c for c in columns):
             failures.append(f"Result missing expected column '{col}' (got: {list(columns)})")
 
-    # Row count
+    #Row count
     n = len(data_rows)
     if n < case.min_rows:
         failures.append(f"Too few rows: got {n}, expected >= {case.min_rows}")
     if case.max_rows != -1 and n > case.max_rows:
         failures.append(f"Too many rows: got {n}, expected <= {case.max_rows}")
 
-    # Value check
+    #Value check
     if case.value_check and data_rows:
         try:
             orig_cols = [c for c in response.get("columns", [])]
@@ -103,11 +103,11 @@ def score_case(case: EvalCase, response: dict) -> tuple[str, list[str]]:
 
     if not failures:
         return "PASS", []
-    # Distinguish PARTIAL (ran but wrong shape) from FAIL (didn't run)
+    #Distinguish PARTIAL (ran but wrong shape) from FAIL (didn't run)
     return "PARTIAL", failures
 
 
-# ── Runner ────────────────────────────────────────────────────────────────────
+#--- Runner ---
 
 def run_eval(cases: list[EvalCase]) -> list[dict]:
     engine = get_engine()
@@ -151,7 +151,7 @@ def run_eval(cases: list[EvalCase]) -> list[dict]:
     return records
 
 
-# ── Summary ───────────────────────────────────────────────────────────────────
+#--- Summary ---
 
 def print_summary(records: list[dict]) -> None:
     total = len(records)
@@ -207,7 +207,7 @@ def print_summary(records: list[dict]) -> None:
     console.print(f"[bold]Avg latency:[/bold] {avg_time:.1f}s per question\n")
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+#--- Entry point ---
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AskSQL Markets eval runner")

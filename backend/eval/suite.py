@@ -1,13 +1,13 @@
 """
-AskSQL Markets — Evaluation suite.
+AskSQL Markets - Evaluation suite
 
 25 test cases covering all tables, query types, and edge cases.
 Each case defines what the agent's response must satisfy to pass.
 
 Scoring per case:
-  PASS    — SQL ran, all structural checks pass
-  PARTIAL — SQL ran but columns/rows/value check failed
-  FAIL    — SQL error, forbidden keyword, or wrong CANNOT_ANSWER behaviour
+  PASS: SQL ran, all structural checks pass
+  PARTIAL: SQL ran but columns/rows/value check failed
+  FAIL: SQL error, forbidden keyword, or wrong CANNOT_ANSWER behaviour
 """
 
 from dataclasses import dataclass, field
@@ -19,16 +19,16 @@ class EvalCase:
     id: int
     category: str
     question: str
-    # If False, agent must return CANNOT_ANSWER (no SQL, success=True, sql=None)
+    #If False, agent must return CANNOT_ANSWER (no SQL, success=True, sql=None)
     should_answer: bool
-    # SQL must reference all of these table names (case-insensitive substring match)
+    #SQL must reference all of these table names (case-insensitive substring match)
     expected_tables: list[str] = field(default_factory=list)
-    # Result columns must include all of these (case-insensitive)
+    #Result columns must include all of these (case-insensitive)
     expected_columns: list[str] = field(default_factory=list)
-    # Acceptable row count range for data rows (ignoring cap sentinel)
+    #Acceptable row count range for data rows (ignoring cap sentinel)
     min_rows: int = 1
     max_rows: int = 500
-    # Optional: receives (columns, results) → bool for value-level checks
+    #Optional: receives (columns, results) -> bool for value-level checks
     value_check: Optional[Callable] = None
     notes: str = ""
 
@@ -44,7 +44,7 @@ def _col_index(columns: list[str], name: str) -> int:
     for i, c in enumerate(columns):
         if c.lower() == name_lower:
             return i
-    # 2. Substring: expected name is contained in column name (e.g. "avg" in "avg_revenue")
+    # 2. Substring: expected name is contained in column name (Ex: "avg" in "avg_revenue")
     for i, c in enumerate(columns):
         if name_lower in c.lower():
             return i
@@ -64,7 +64,7 @@ def _get(columns: list[str], results: list[list], col: str, row: int = 0):
 
 EVAL_SUITE: list[EvalCase] = [
 
-    # ── Single table: companies ───────────────────────────────────────────────
+    #--- Single table: companies ---
 
     EvalCase(
         id=1,
@@ -99,7 +99,7 @@ EVAL_SUITE: list[EvalCase] = [
         notes="Should return Apple Inc.",
     ),
 
-    # ── Single table: prices ──────────────────────────────────────────────────
+    #--- Single table: prices ---
 
     EvalCase(
         id=4,
@@ -145,7 +145,7 @@ EVAL_SUITE: list[EvalCase] = [
         notes="COUNT(DISTINCT date), expect ~1255 — 'distinct' keyword forces correct aggregation",
     ),
 
-    # ── Single table: financials ──────────────────────────────────────────────
+    #--- Single table: financials ---
 
     EvalCase(
         id=8,
@@ -191,7 +191,7 @@ EVAL_SUITE: list[EvalCase] = [
         notes="JOIN companies, sector=Technology, year=2024 — tests fiscal_year fix",
     ),
 
-    # ── Single table: dividends ───────────────────────────────────────────────
+    #--- Single table: dividends ---
 
     EvalCase(
         id=12,
@@ -226,7 +226,7 @@ EVAL_SUITE: list[EvalCase] = [
         notes="SUM(dividend_amount) for AAPL",
     ),
 
-    # ── Multi-table JOINs ─────────────────────────────────────────────────────
+    #--- Multi-table JOINs ---
 
     EvalCase(
         id=15,
@@ -300,7 +300,7 @@ EVAL_SUITE: list[EvalCase] = [
         notes="JOIN prices + companies + MAX(date) + ORDER BY volume DESC LIMIT 10",
     ),
 
-    # ── Aggregation / complex ─────────────────────────────────────────────────
+    #--- Aggregation / complex ---
 
     EvalCase(
         id=22,
@@ -335,7 +335,7 @@ EVAL_SUITE: list[EvalCase] = [
         notes="MAX(close) — expect NVR ~7000+",
     ),
 
-    # ── CANNOT_ANSWER ─────────────────────────────────────────────────────────
+    #--- CANNOT_ANSWER ---
 
     EvalCase(
         id=25,
