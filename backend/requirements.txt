@@ -27,7 +27,7 @@ urllib3==2.6.3
 websockets==16.0
 yfinance==1.2.2
 
-# ── AI / Agent layer ──────────────────────────────────────────────────────────
+#--- AI / Agent layer ---
 langchain
 langchain-openai
 langchain-ollama
@@ -36,6 +36,6 @@ langchain-chroma
 chromadb
 python-dotenv
 
-# ── API layer ─────────────────────────────────────────────────────────────────
+#--- API layer ---
 fastapi
 uvicorn[standard]
