@@ -1,10 +1,10 @@
 """
-AskSQL Markets — FastAPI backend.
+AskSQL Markets - FastAPI backend
 
 Endpoints:
-  POST /ask     — natural language → SQL + results + explanation
-  GET  /health  — DB connection check + row counts + active LLM provider
-  GET  /schema  — returns the full schema context string used by the agent
+  POST /ask - natural language -> SQL + results + explanation
+  GET  /health - DB connection check + row counts + active LLM provider
+  GET  /schema - returns the full schema context string used by the agent
 """
 
 import os
@@ -28,7 +28,7 @@ engine = get_engine()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create query_history table (and any other new tables) on startup
+    #Create query_history table (and any other new tables) on startup
     Base.metadata.create_all(engine)
     yield
 
@@ -53,7 +53,7 @@ app.add_middleware(
 )
 
 
-# ── Request / Response models ─────────────────────────────────────────────────
+#--- Request/Response models ---
 
 class AskRequest(BaseModel):
     question: str
@@ -68,7 +68,7 @@ class AskResponse(BaseModel):
     error: str | None = None
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
+#--- Endpoints ---
 
 @app.post("/ask", response_model=AskResponse)
 def ask_endpoint(req: AskRequest):
