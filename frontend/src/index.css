@@ -11,7 +11,7 @@ body {
 }
 #root { min-height: 100vh; }
 
-/* ── Grid overlay ── */
+/* --- Grid overlay --- */
 .grid-overlay {
   background-image:
     linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
@@ -23,7 +23,7 @@ body {
   z-index: 0;
 }
 
-/* ── Animated gradient blobs ── */
+/* --- Animated gradient blobs --- */
 .blob {
   position: absolute;
   border-radius: 50%;
@@ -62,7 +62,7 @@ body {
   to   { transform: translate(-50%, -50%) scale(1.35) rotate(25deg); }
 }
 
-/* ── Gradient text ── */
+/* --- Gradient text --- */
 .gradient-text {
   background: linear-gradient(125deg, #c4b5fd 0%, #a78bfa 30%, #818cf8 65%, #e0d7ff 100%);
   -webkit-background-clip: text;
@@ -70,20 +70,20 @@ body {
   background-clip: text;
 }
 
-/* ── Cards ── */
+/* --- Cards --- */
 .glass-card {
   background: rgba(10, 8, 24, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.11);
   backdrop-filter: blur(14px);
 }
 
-/* ── Input glow ── */
+/* --- Input glow --- */
 .input-glow:focus-within {
   border-color: rgba(139, 92, 246, 0.7) !important;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 24px rgba(109, 40, 217, 0.2);
 }
 
-/* ── Loading dots ── */
+/* --- Loading dots --- */
 @keyframes bounce-dot {
   0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
   40%            { transform: translateY(-9px); opacity: 1; }
@@ -92,6 +92,6 @@ body {
 .dot-2 { animation: bounce-dot 1.4s ease-in-out 0.16s infinite; }
 .dot-3 { animation: bounce-dot 1.4s ease-in-out 0.32s infinite; }
 
-/* ── Table rows ── */
+/* --- Table rows --- */
 .results-table tbody tr { transition: background 0.12s; }
 .results-table tbody tr:hover td { background: rgba(109, 40, 217, 0.09); }

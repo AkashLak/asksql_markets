@@ -71,7 +71,7 @@ export default function App() {
 
       <div className="relative z-10 min-h-screen flex flex-col">
 
-        {/* Compact header — shown on non-idle */}
+        {/* Compact header - shown on non-idle */}
         <AnimatePresence>
           {status !== 'idle' && (
             <motion.header
@@ -95,7 +95,7 @@ export default function App() {
 
         <AnimatePresence mode="wait">
 
-          {/* ── IDLE ── */}
+          {/* --- IDLE --- */}
           {status === 'idle' && (
             <motion.div key="idle" {...viewAnim}
               className="min-h-screen flex flex-col items-center justify-center px-6"
@@ -151,7 +151,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── LOADING ── */}
+          {/* --- LOADING --- */}
           {status === 'loading' && (
             <motion.div key="loading" {...viewAnim}
               className="min-h-screen flex flex-col w-full items-center px-6 pt-8 pb-12"
@@ -179,7 +179,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── RESULTS ── */}
+          {/* --- RESULTS --- */}
           {(status === 'done' || status === 'error') && (
             <motion.div key="results" {...viewAnim}
               className="min-h-screen flex flex-col items-center w-full pt-8 pb-24"
