@@ -163,13 +163,34 @@ LLM_PROVIDER=ollama   #free, local (requires Ollama running)
 LLM_PROVIDER=openai   #requires OPENAI_API_KEY, uses gpt-4o-mini
 ```
 
-No code changes needed - `llm_factory.py` handles the swap automatically.
+> ⚠️ **Switching providers requires rebuilding the Chroma vector index.** Ollama (`nomic-embed-text`) produces 768-dim embeddings; OpenAI (`text-embedding-3-small`) produces 1536-dim embeddings. Mixing them causes a dimension mismatch error on every query.
+
+**To switch providers:**
+
+```bash
+# 1. Update LLM_PROVIDER in .env
+
+# 2. Delete the old Chroma index
+rm -rf backend/data/chroma_schema
+
+# 3. Rebuild with the new provider's embeddings
+cd backend && source venv/bin/activate
+python -c "from agent.schema_store import build_schema_store; build_schema_store()"
+#(for ollama, make sure `ollama serve` is running first)
+```
 
 ---
 
 ## 🧪 Eval Suite
 
-25 test cases covering single-table queries, multi-table joins, aggregations, and edge cases. Baseline with llama3.2: **84% pass / 96% usable**. Production uses OpenAI gpt-4o-mini, which scores higher across all categories.
+25 test cases covering single-table queries, multi-table joins, aggregations, and edge cases. Both providers tested against the full suite:
+
+| Provider | Pass | Usable | Avg latency |
+|----------|------|--------|-------------|
+| Ollama llama3.2 (local) | **84%** | **96%** | 5s |
+| OpenAI gpt-4o-mini (production) | **84%** | **96%** | 3s |
+
+Same accuracy across both providers — OpenAI is ~2s faster per query.
 
 ```bash
 cd backend && source venv/bin/activate
