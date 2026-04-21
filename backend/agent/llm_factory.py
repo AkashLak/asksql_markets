@@ -5,8 +5,8 @@ Reads LLM_PROVIDER from the environment and returns the correct
 (chat_llm, embeddings) pair. Supports "openai" and "ollama".
 
 Switch providers by changing LLM_PROVIDER in .env:
-  LLM_PROVIDER=ollama   → free, local, no API key needed
-  LLM_PROVIDER=openai   → paid, cloud, requires OPENAI_API_KEY
+  LLM_PROVIDER=ollama -> free, local, no API key needed
+  LLM_PROVIDER=openai -> paid, cloud, requires OPENAI_API_KEY
 """
 
 import os

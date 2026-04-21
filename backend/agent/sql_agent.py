@@ -1,14 +1,14 @@
 """
-AskSQL Markets — NL-to-SQL agent.
+AskSQL Markets - NL-to-SQL agent
 
 Two-step pipeline that works reliably with both small local models (Ollama)
 and cloud models (OpenAI):
-  1. Generate SQL  — LLM receives schema context + question, returns only SQL
-  2. Execute SQL   — run against SQLite, get structured results (with retry on error)
-  3. Explain       — LLM receives question + results, returns plain-English answer
+  1. Generate SQL - LLM receives schema context + question, returns only SQL
+  2. Execute SQL - run against SQLite, get structured results (with retry on error)
+  3. Explain - LLM receives question + results, returns plain-English answer
 
-This avoids the ReAct agent loop (Thought/Action/Observation format) which
-requires larger models to follow reliably.
+Avoids the ReAct agent loop (Thought/Action/Observation format) which
+requires larger models to follow reliably
 """
 
 import re
@@ -23,11 +23,11 @@ from sqlalchemy.orm import Session
 from .llm_factory import get_llm_and_embeddings
 from .schema_store import get_schema_context
 
-# Hard cap on rows returned to the UI — prevents cartesian-product floods
-# when the LLM omits LIMIT on multi-table joins.
+#Hard cap on rows returned to the UI - prevents cartesian-product floods
+#when the LLM omits LIMIT on multi-table joins.
 MAX_RESULT_ROWS = 200
 
-# How many times to ask the LLM to fix broken SQL before giving up.
+#How many times to ask the LLM to fix broken SQL before giving up.
 MAX_SQL_RETRIES = 2
 
 _FORBIDDEN_RE = re.compile(
@@ -36,7 +36,7 @@ _FORBIDDEN_RE = re.compile(
 )
 _SQL_FENCE_RE = re.compile(r"```(?:sql)?\s*([\s\S]*?)```", re.IGNORECASE)
 
-# Questions about future events or predictions can't be answered with historical data
+#Questions about future events or predictions can't be answered with historical data
 _FUTURE_RE = re.compile(
     r"\b(will\s+\w+|predict|forecast|next\s+(week|month|year|quarter)|"
     r"future\s+(price|revenue|stock|performance)|going\s+to\s+be|tomorrow['']?s)\b",
@@ -106,7 +106,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
     explanation = ""
 
     try:
-        # ── Pre-check: reject future/prediction questions immediately ─────────
+        #Pre-check: reject future/prediction questions immediately
         if _FUTURE_RE.search(question):
             explanation = "This database only contains historical data and can't answer questions about future prices, revenue, or predictions."
             success = True
@@ -120,7 +120,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
                 "error": None,
             }
 
-        # ── Step 1: Generate SQL ──────────────────────────────────────────────
+        #---Step 1: Generate SQL---
         sql_messages = [
             SystemMessage(content=_SQL_SYSTEM_PROMPT.format(schema_context=schema_context)),
             HumanMessage(content=question),
@@ -128,7 +128,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
         sql_response = llm.invoke(sql_messages)
         raw_sql = sql_response.content.strip()
 
-        # Strip markdown fences if the model added them despite instructions
+        #Strip markdown fences if the model added them despite instructions
         fence_match = _SQL_FENCE_RE.search(raw_sql)
         if fence_match:
             raw_sql = fence_match.group(1).strip()
@@ -142,7 +142,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
         else:
             generated_sql = raw_sql
 
-            # ── Step 2: Execute SQL (with retry on failure) ───────────────────
+            #---Step 2: Execute SQL (with retry on failure)---
             sql_messages_so_far = sql_messages + [AIMessage(content=generated_sql)]
             last_exc: Exception | None = None
 
@@ -153,7 +153,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
                         columns = list(result_proxy.keys())
                         raw_rows = result_proxy.fetchall()
 
-                    # Cap rows so cartesian-product queries don't flood the UI
+                    #Cap rows so cartesian-product queries don't flood the UI
                     truncated = len(raw_rows) > MAX_RESULT_ROWS
                     results = [list(row) for row in raw_rows[:MAX_RESULT_ROWS]]
                     if truncated:
@@ -161,12 +161,12 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
                         results.append([f"… results capped at {MAX_RESULT_ROWS} rows"] + [""] * (len(columns) - 1))
 
                     last_exc = None
-                    break  # success — exit retry loop
+                    break  #success - exit retry loop
 
                 except Exception as exc:
                     last_exc = exc
                     if attempt < MAX_SQL_RETRIES:
-                        # Feed the error back and ask the LLM to fix the SQL
+                        #Feed the error back and ask the LLM to fix the SQL
                         sql_messages_so_far = sql_messages_so_far + [
                             HumanMessage(
                                 content=(
@@ -187,7 +187,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
             if last_exc is not None:
                 raise last_exc
 
-            # ── Step 3: Explain results ───────────────────────────────────────
+            #---Step 3: Explain results---
             results_preview = _format_results_for_prompt(columns, results)
             explain_messages = [
                 SystemMessage(content=_EXPLAIN_SYSTEM_PROMPT),

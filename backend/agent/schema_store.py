@@ -1,17 +1,17 @@
 """
-Chroma-backed schema store for RAG-enhanced SQL generation.
+Chroma-backed schema store for RAG-enhanced SQL generation
 
 Stores embeddings of:
   - One document per table (columns, types, purpose, domain notes)
-  - Example natural-language → SQL pairs
+  - Example natural-language -> SQL pairs
 
 At query time, the user's question is embedded and the top-k most
 relevant documents are retrieved and injected into the agent prompt.
-This ensures the LLM sees the right schema context even as the
+LLM can see the right schema context even as the
 database grows.
 
 Chroma index is persisted at backend/data/chroma_schema/ and rebuilt
-automatically if it doesn't exist.
+automatically if it doesn't exist
 """
 
 from pathlib import Path
@@ -23,9 +23,9 @@ from .llm_factory import get_llm_and_embeddings
 
 CHROMA_DIR = Path(__file__).parent.parent / "data" / "chroma_schema"
 
-# ---------------------------------------------------------------------------
-# Schema documents — one per table + example Q→SQL pairs
-# ---------------------------------------------------------------------------
+# ---
+# Schema documents - one per table + example Q->SQL pairs
+# ---
 
 _SCHEMA_DOCS = [
     Document(
@@ -250,7 +250,7 @@ _SCHEMA_DOCS = [
 
 
 def build_schema_store() -> Chroma:
-    """Build and persist the Chroma index. Call once (or to rebuild)."""
+    """Build and persist the Chroma index. Call once (or to rebuild)"""
     _, embeddings = get_llm_and_embeddings()
     store = Chroma.from_documents(
         documents=_SCHEMA_DOCS,
@@ -263,7 +263,7 @@ def build_schema_store() -> Chroma:
 
 
 def load_schema_store() -> Chroma:
-    """Load existing Chroma index, building it first if it doesn't exist."""
+    """Load existing Chroma index, building it first if it doesn't exist"""
     _, embeddings = get_llm_and_embeddings()
     if not CHROMA_DIR.exists():
         return build_schema_store()
@@ -277,7 +277,7 @@ def load_schema_store() -> Chroma:
 def get_schema_context(question: str, k: int = 3) -> str:
     """
     Embed the question, retrieve top-k relevant schema docs, and return
-    them as a formatted string ready to inject into a system prompt.
+    them as a formatted string ready to inject into a system prompt
     """
     store = load_schema_store()
     docs = store.similarity_search(question, k=k)
