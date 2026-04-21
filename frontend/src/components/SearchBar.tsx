@@ -9,7 +9,7 @@ interface Props {
 }
 
 const EXAMPLES = [
-  'Top 5 stocks by closing price today?',
+  'Top 5 stocks by most recent closing price?',
   'Highest revenue sector in 2024?',
   'Apple dividend history',
   'Companies with profit margin above 30%?',
