@@ -44,42 +44,42 @@ Type a question like "Which technology companies had the highest profit margin i
 
 ```
 asksql_markets/
-├── .env.example                     # Environment variable template
+├── .env.example                     #Environment variable template
 ├── .github/
 │   └── workflows/
-│       └── daily_refresh.yml        # Scheduled daily data refresh
+│       └── daily_refresh.yml        #Scheduled daily data refresh
 ├── backend/
 │   ├── agent/
-│   │   ├── llm_factory.py           # Swaps between Ollama and OpenAI via env var
-│   │   ├── schema_store.py          # Chroma RAG (embeds schema + Q->SQL examples)
-│   │   └── sql_agent.py             # Core pipeline: generate SQL -> execute -> explain
+│   │   ├── llm_factory.py           #Swaps between Ollama and OpenAI via env var
+│   │   ├── schema_store.py          #Chroma RAG (embeds schema + Q->SQL examples)
+│   │   └── sql_agent.py             #Core pipeline: generate SQL -> execute -> explain
 │   ├── api/
-│   │   └── main.py                  # FastAPI: /ask /health /schema /admin/sync
+│   │   └── main.py                  #FastAPI: /ask /health /schema /admin/sync
 │   ├── data/
-│   │   ├── models.py                # SQLAlchemy ORM models
-│   │   ├── scraper.py               # Wikipedia S&P 500 scraper
-│   │   ├── ingest.py                # yfinance data fetcher + bulk upserts
-│   │   ├── run_pipeline.py          # CLI entry point for full data ingestion
-│   │   └── daily_refresh.py        # Incremental refresh (last 7 days, prices + dividends)
+│   │   ├── models.py                #SQLAlchemy ORM models
+│   │   ├── scraper.py               #Wikipedia S&P 500 scraper
+│   │   ├── ingest.py                #yfinance data fetcher + bulk upserts
+│   │   ├── run_pipeline.py          #CLI entry point for full data ingestion
+│   │   └── daily_refresh.py        #Incremental refresh (last 7 days, prices + dividends)
 │   ├── eval/
-│   │   ├── suite.py                 # 25 test cases with structural checks
-│   │   └── run_eval.py              # Eval runner with rich output + JSON results
-│   ├── start.sh                     # Render startup script
-│   ├── render.yaml                  # Render deployment config
+│   │   ├── suite.py                 #25 test cases with structural checks
+│   │   └── run_eval.py              #Eval runner with rich output + JSON results
+│   ├── start.sh                     #Render startup script
+│   ├── render.yaml                  #Render deployment config
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx                  # State machine: idle -> loading -> done/error
+│   │   ├── App.tsx                  #State machine: idle -> loading -> done/error
 │   │   ├── components/
-│   │   │   ├── SearchBar.tsx        # Query input with example chips
-│   │   │   ├── AnswerCard.tsx       # Explanation with number highlighting
-│   │   │   ├── DataChart.tsx        # Auto bar/line chart via Recharts
-│   │   │   ├── SqlDisplay.tsx       # Collapsible SQL block with copy button
-│   │   │   └── ResultsTable.tsx     # Animated results table
-│   │   ├── api.ts                   # Fetch wrapper (uses VITE_API_URL env var)
-│   │   └── index.css                # Glass morphism, blob animations, grid overlay
+│   │   │   ├── SearchBar.tsx        #Query input with example chips
+│   │   │   ├── AnswerCard.tsx       #Explanation with number highlighting
+│   │   │   ├── DataChart.tsx        #Auto bar/line chart via Recharts
+│   │   │   ├── SqlDisplay.tsx       #Collapsible SQL block with copy button
+│   │   │   └── ResultsTable.tsx     #Animated results table
+│   │   ├── api.ts                   #Fetch wrapper (uses VITE_API_URL env var)
+│   │   └── index.css                #Glass morphism, blob animations, grid overlay
 │   ├── vercel.json
-│   └── vite.config.ts               # Proxies /ask /health /schema -> :8000 in dev
+│   └── vite.config.ts               #Proxies /ask /health /schema -> :8000 in dev
 └── README.md
 ```
 
@@ -103,7 +103,7 @@ The database is distributed as a compressed release asset (`markets.db.gz`) on t
 
 ## Agent Architecture
 
-Fixed generate→execute→explain pipeline (not a ReAct loop — more reliable across model sizes):
+Fixed generate→execute→explain pipeline (not a ReAct loop, and more reliable across model sizes):
 
 ```
 Question
@@ -129,7 +129,7 @@ Question
 ### Prerequisites
 
 ```bash
-# Install Ollama and pull models (one-time)
+#Install Ollama and pull models (one-time)
 ollama pull llama3.2
 ollama pull nomic-embed-text
 ```
@@ -137,19 +137,19 @@ ollama pull nomic-embed-text
 ### Backend
 
 ```bash
-# Terminal 1
+#Terminal 1
 ollama serve
 
-# Terminal 2
+#Terminal 2
 cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Build the database (first time only, ~22 min for all 503 tickers)
+#Build the database (first time only, ~22 min for all 503 tickers)
 python -m data.run_pipeline
 
-# Start the API
+#Start the API
 uvicorn api.main:app --reload --port 8000
 ```
 
@@ -158,7 +158,7 @@ uvicorn api.main:app --reload --port 8000
 ```bash
 cd frontend
 npm install
-npm run dev   # dev server on :5173, proxies API calls to :8000
+npm run dev   #dev server on :5173, proxies API calls to :8000
 ```
 
 Open http://localhost:5173.
@@ -170,17 +170,17 @@ Open http://localhost:5173.
 Controlled by `LLM_PROVIDER` in `.env` (copy `.env.example` to get started):
 
 ```bash
-LLM_PROVIDER=ollama   # free, local (requires Ollama running)
-LLM_PROVIDER=openai   # requires OPENAI_API_KEY, uses gpt-4o-mini
+LLM_PROVIDER=ollama   #free, local (requires Ollama running)
+LLM_PROVIDER=openai   #requires OPENAI_API_KEY, uses gpt-4o-mini
 ```
 
 > **Note:** Switching providers requires rebuilding the Chroma vector index. Ollama (`nomic-embed-text`) produces 768-dim embeddings; OpenAI (`text-embedding-3-small`) produces 1536-dim. Mixing them causes a dimension mismatch error.
 
 ```bash
-# 1. Update LLM_PROVIDER in .env
-# 2. Delete the old Chroma index
+#1. Update LLM_PROVIDER in .env
+#2. Delete the old Chroma index
 rm -rf backend/data/chroma_schema
-# 3. Rebuild
+#3. Rebuild
 cd backend && source venv/bin/activate
 python -c "from agent.schema_store import build_schema_store; build_schema_store()"
 ```
@@ -192,7 +192,7 @@ python -c "from agent.schema_store import build_schema_store; build_schema_store
 A GitHub Actions workflow (`.github/workflows/daily_refresh.yml`) runs every weekday at 9 PM UTC (5 PM ET, after US market close):
 
 1. Downloads the current `markets.db.gz` from the `db-latest` GitHub Release
-2. Runs `daily_refresh.py` — fetches the last 7 days of prices + dividends from yfinance for all 503 tickers (~3–5 min)
+2. Runs `daily_refresh.py` — fetches the last 7 days of prices + dividends from yfinance for all 503 tickers (around 3–5 min)
 3. Compresses and re-uploads the updated database to the `db-latest` release
 4. Pings the Render backend's `/admin/sync` endpoint to hot-swap the live database
 
@@ -212,9 +212,9 @@ The workflow can also be triggered manually from the GitHub Actions UI.
 ```bash
 cd backend && source venv/bin/activate
 
-python -m eval.run_eval                    # run all 25 cases (~5 min)
-python -m eval.run_eval --ids 1 5 11       # run specific cases
-python -m eval.run_eval --category join    # run by category
+python -m eval.run_eval                    #run all 25 cases (5 min)
+python -m eval.run_eval --ids 1 5 11       #run specific cases
+python -m eval.run_eval --category join    #run by category
 ```
 
 Results saved to `eval/eval_results.json`.
@@ -224,7 +224,7 @@ Results saved to `eval/eval_results.json`.
 ## Deployment
 
 - **Frontend** — Vercel (auto-deploys from `main`)
-- **Backend** — Render free tier (Python 3.11, 512 MB RAM)
+- **Backend** — Render (Python 3.11, 512 MB RAM)
 - **Database** — `markets.db.gz` stored in GitHub Releases (`db-latest` tag), downloaded at backend startup; refreshed daily via GitHub Actions
 
 ### Environment variables
@@ -235,10 +235,10 @@ Results saved to `eval/eval_results.json`.
 |----------|---------|
 | `LLM_PROVIDER` | Set to `openai` |
 | `OPENAI_API_KEY` | OpenAI API key |
-| `GITHUB_REPO` | Repo name for DB download (e.g. `AkashLak/asksql_markets`) |
+| `GITHUB_REPO` | Repo name for DB download (Ex: `AkashLak/asksql_markets`) |
 | `FRONTEND_URL` | Vercel URL (for CORS) |
 | `SYNC_SECRET` | Shared secret protecting `/admin/sync` (optional) |
-| `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` | Set to `python` — required for chromadb on Render |
+| `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` | Set to `python` - required for chromadb on Render |
 
 **Vercel (frontend):**
 
@@ -253,4 +253,4 @@ Results saved to `eval/eval_results.json`.
 | `RENDER_APP_URL` | Render backend URL (for post-refresh sync ping) |
 | `SYNC_SECRET` | Must match the value set on Render |
 
-> Render free tier spins down after 15 min of inactivity — first request after idle takes ~50s to wake up.
+> Render free tier spins down after 15 min of inactivity, and first request after idle takes around 50s to wake up.
