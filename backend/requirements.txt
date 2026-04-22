@@ -39,3 +39,4 @@ python-dotenv
 #--- API layer ---
 fastapi
 uvicorn[standard]
+slowapi

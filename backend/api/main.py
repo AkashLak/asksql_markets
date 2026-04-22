@@ -16,9 +16,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from sqlalchemy import text
 
 load_dotenv()
@@ -35,6 +38,8 @@ SYNC_SECRET = os.getenv("SYNC_SECRET", "")
 _DB_PATH = Path(__file__).parent.parent / "data" / "markets.db"
 
 engine = None
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 def _download_db() -> None:
@@ -85,6 +90,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 _frontend_url = os.getenv("FRONTEND_URL", "")
 _origins = ["http://localhost:5173"]
 if _frontend_url:
@@ -101,7 +109,7 @@ app.add_middleware(
 #--- Request/Response models ---
 
 class AskRequest(BaseModel):
-    question: str
+    question: str = Field(min_length=1, max_length=500)
 
 
 class AskResponse(BaseModel):
@@ -116,15 +124,18 @@ class AskResponse(BaseModel):
 #--- Endpoints ---
 
 @app.post("/ask", response_model=AskResponse)
-def ask_endpoint(req: AskRequest):
-    if not req.question.strip():
+@limiter.limit("20/minute")
+def ask_endpoint(request: Request, req: AskRequest):
+    question = req.question.strip()
+    if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
-    result = ask(req.question, engine)
+    result = ask(question, engine)
     return AskResponse(**result)
 
 
 @app.get("/health")
-def health():
+@limiter.limit("60/minute")
+def health(request: Request):
     table_counts: dict[str, int] = {}
     try:
         with engine.connect() as conn:
@@ -142,13 +153,17 @@ def health():
 
 
 @app.get("/schema")
-def schema_endpoint(question: str = "general schema overview"):
+@limiter.limit("30/minute")
+def schema_endpoint(request: Request, question: str = "general schema overview"):
+    if len(question) > 200:
+        question = question[:200]
     context = get_schema_context(question, k=10)
     return {"description": context}
 
 
 @app.post("/admin/sync")
-async def admin_sync(x_sync_secret: str = Header(default="")):
+@limiter.limit("5/minute")
+async def admin_sync(request: Request, x_sync_secret: str = Header(default="")):
     """Re-download latest markets.db from GitHub Releases. Called by GitHub Actions after daily_refresh."""
     if SYNC_SECRET and x_sync_secret != SYNC_SECRET:
         raise HTTPException(status_code=403, detail="Invalid sync secret.")

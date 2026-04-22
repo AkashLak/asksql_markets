@@ -21,8 +21,8 @@ export function SearchBar({ onSubmit, loading, autoFocus, defaultValue }: Props)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const q = inputRef.current?.value.trim() ?? ''
-    if (q && !loading) onSubmit(q)
+    const q = (inputRef.current?.value ?? '').trim()
+    if (q && !loading && q.length <= 500) onSubmit(q)
   }
 
   function handleExample(ex: string) {
@@ -52,6 +52,7 @@ export function SearchBar({ onSubmit, loading, autoFocus, defaultValue }: Props)
             disabled={loading}
             autoFocus={autoFocus}
             autoComplete="off"
+            maxLength={500}
             className="flex-1 bg-transparent px-3 py-5 text-sm text-slate-100 placeholder-slate-500
                        outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
