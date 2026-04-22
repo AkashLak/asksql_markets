@@ -1,0 +1,43 @@
+name: Daily Market Data Refresh
+
+on:
+  schedule:
+    # 9 PM UTC = 5 PM ET — runs after US market close, weekdays only
+    - cron: '0 21 * * 1-5'
+  workflow_dispatch: # allow manual trigger from the GitHub Actions UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install refresh dependencies
+        run: pip install yfinance libsql-experimental rich python-dotenv pandas
+
+      - name: Run daily refresh
+        working-directory: backend
+        env:
+          TURSO_URL: ${{ secrets.TURSO_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: python -m data.daily_refresh
+
+      - name: Trigger Render sync
+        if: success()
+        env:
+          RENDER_APP_URL: ${{ secrets.RENDER_APP_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: |
+          if [ -n "$RENDER_APP_URL" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST "${RENDER_APP_URL}/admin/sync" \
+              -H "X-Sync-Secret: ${SYNC_SECRET}")
+            echo "Render sync response: $STATUS"
+          fi
