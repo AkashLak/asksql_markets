@@ -85,13 +85,21 @@ RULES:
    - "Which company will have the highest revenue in 2026?" → future prediction
    - "What is the sentiment on Tesla stock?" → no sentiment data in the database
    - "Compare Apple to Samsung" → Samsung is not an S&P 500 company in the database
-8. Common column name mistakes to avoid:
+9. Common column name mistakes to avoid:
    - financials year column: use f.year  — NEVER f.fiscal_year (that column does not exist)
    - sector filter: use c.sector = 'Technology'  — NEVER 'tech' or 'technology' (case-sensitive)
    - volume column: use p.volume from the prices table  — NEVER f.volume (financials has no volume column)
    - profit margin: use f.profit_margin from financials  — NEVER c.profit_margin (companies has no profit_margin column)
    - closing price: the column is p.close  — NEVER p.closing_price (that column does not exist)
    - "S&P 500 companies" means all rows — do NOT filter by sector = 'S&P 500' (not a valid sector value)
+10. Company name matching: company names include suffixes like "Inc.", "Corp.", "Ltd." — NEVER use exact match.
+   - CORRECT:   c.ticker = 'TSLA'  or  c.company_name LIKE '%Tesla%'
+   - INCORRECT: c.company_name = 'Tesla'  (will return zero rows)
+   Prefer filtering by ticker when the ticker is obvious from context (TSLA, AAPL, MSFT, AMZN, GOOGL, META, NVDA, etc.)
+11. Year filtering: when a specific year like "2023" is mentioned, use BETWEEN — NEVER use date('now', ...) which always refers to the current date (2026).
+    - CORRECT for prices:     p.date BETWEEN '2023-01-01' AND '2023-12-31'
+    - CORRECT for financials: f.year = 2023
+    - INCORRECT: p.date >= date('now', 'start of year')  (this is the current year, not 2023)
 """
 
 _EXPLAIN_SYSTEM_PROMPT = """\
