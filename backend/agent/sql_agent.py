@@ -61,7 +61,12 @@ RULES:
 6. This is SQLite — use SQLite date functions, NOT PostgreSQL syntax:
    - CORRECT:   date('now', '-2 years')  or  date('now', '-1 month')
    - INCORRECT: DATE 'now' - INTERVAL '2 year'  (this is PostgreSQL, will fail)
-7. If the question cannot be answered with the available data, return exactly: CANNOT_ANSWER
+7. Short phrases without question marks are valid queries — treat them as implicit data requests.
+   - "Apple dividend history" → show Apple's dividend history
+   - "Tesla revenue" → show Tesla's revenue from financials
+   - "Microsoft stock price" → show Microsoft's recent prices
+   Do NOT return CANNOT_ANSWER for terse phrases about data that exists in the database.
+8. If the question cannot be answered with the available data, return exactly: CANNOT_ANSWER
    Examples that require CANNOT_ANSWER:
    - "What will Apple's stock price be next week?" → future prediction, no future data exists
    - "Which company will have the highest revenue in 2026?" → future prediction
