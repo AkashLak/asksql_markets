@@ -215,6 +215,8 @@ __marimo__/
 
 # Pipeline runtime artifacts
 backend/data/ingest_failures.json
+backend/data/migrate_checkpoint.json
+backend/data/markets_replica.db
 
 # Chroma vector store (rebuilt automatically from schema definitions)
 backend/data/chroma_schema/
