@@ -36,6 +36,19 @@ _FORBIDDEN_RE = re.compile(
 )
 _SQL_FENCE_RE = re.compile(r"```(?:sql)?\s*([\s\S]*?)```", re.IGNORECASE)
 
+_QUESTION_START_RE = re.compile(
+    r"^(what|which|who|how|when|where|show|list|find|get|give|tell|compare|"
+    r"calculate|top|average|total|does|is|are|do|did|can|will|would|has|have)",
+    re.IGNORECASE,
+)
+
+def _normalize_question(q: str) -> str:
+    """Rewrite terse noun phrases as explicit data requests so the LLM doesn't CANNOT_ANSWER them."""
+    q = q.strip()
+    if q.endswith("?") or _QUESTION_START_RE.match(q):
+        return q
+    return f"Show me data about: {q}"
+
 #Questions about future events or predictions can't be answered with historical data
 _FUTURE_RE = re.compile(
     r"\b(will\s+\w+|predict|forecast|next\s+(week|month|year|quarter)|"
@@ -101,6 +114,7 @@ def ask(question: str, engine: Engine) -> dict[str, Any]:
     Logs every attempt to query_history.
     """
     llm, _ = get_llm_and_embeddings()
+    question = _normalize_question(question)
     schema_context = get_schema_context(question)
 
     generated_sql: str | None = None
