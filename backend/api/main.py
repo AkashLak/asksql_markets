@@ -5,11 +5,13 @@ Endpoints:
   POST /ask        - natural language → SQL + results + explanation
   GET  /health     - DB connection check + row counts + active LLM provider
   GET  /schema     - schema context string used by the agent
-  POST /admin/sync - (production) pull latest data from Turso into local replica
+  POST /admin/sync - re-download latest markets.db from GitHub Releases
 """
 
 import asyncio
+import gzip
 import os
+import urllib.request
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -26,50 +28,52 @@ from agent.llm_factory import get_provider_name
 from agent.schema_store import get_schema_context
 from agent.sql_agent import ask
 
-TURSO_URL = os.getenv("TURSO_URL", "")
-TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
-# Optional: set SYNC_SECRET on Render + GitHub to protect /admin/sync
+GITHUB_REPO = os.getenv("GITHUB_REPO", "")   # e.g. "AkashLak/asksql_markets"
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "") # only needed for private repos
 SYNC_SECRET = os.getenv("SYNC_SECRET", "")
 
-_REPLICA_PATH = Path(__file__).parent.parent / "data" / "markets_replica.db"
+_DB_PATH = Path(__file__).parent.parent / "data" / "markets.db"
 
-_turso_conn = None
 engine = None
 
 
-async def _do_sync() -> None:
-    """Pull latest data from Turso into the local embedded replica."""
-    if _turso_conn is not None:
-        await asyncio.get_event_loop().run_in_executor(None, _turso_conn.sync)
+def _download_db() -> None:
+    """Download markets.db.gz from GitHub Releases and decompress to _DB_PATH."""
+    if not GITHUB_REPO:
+        raise RuntimeError("GITHUB_REPO env var is not set — cannot download DB.")
 
+    url = f"https://github.com/{GITHUB_REPO}/releases/download/db-latest/markets.db.gz"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
 
-async def _periodic_sync(interval_seconds: int = 21_600) -> None:
-    """Re-sync from Turso every 6 hours so fresh data becomes visible without a restart."""
-    while True:
-        await asyncio.sleep(interval_seconds)
-        await _do_sync()
+    temp_gz = _DB_PATH.with_suffix(".db.gz.tmp")
+    temp_db = _DB_PATH.with_suffix(".db.tmp")
+
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            temp_gz.write_bytes(resp.read())
+        with gzip.open(temp_gz, "rb") as gz_in, open(temp_db, "wb") as db_out:
+            db_out.write(gz_in.read())
+        os.replace(temp_db, _DB_PATH)  # atomic on POSIX
+    finally:
+        temp_gz.unlink(missing_ok=True)
+        if temp_db.exists():
+            temp_db.unlink(missing_ok=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _turso_conn, engine
+    global engine
 
-    if TURSO_URL and TURSO_AUTH_TOKEN:
-        import libsql_experimental as libsql
+    if not _DB_PATH.exists():
+        try:
+            await asyncio.get_event_loop().run_in_executor(None, _download_db)
+        except Exception as exc:
+            # db-latest release may not exist yet (first deploy before seed).
+            # Start anyway — /health will show 0 rows; /admin/sync recovers it.
+            print(f"Warning: could not download DB on startup ({exc}). Starting without data.")
 
-        # Create a local embedded replica that mirrors Turso.
-        # SQLAlchemy reads from the local file (fast); libsql keeps it in sync.
-        _turso_conn = libsql.connect(
-            str(_REPLICA_PATH),
-            sync_url=TURSO_URL,
-            auth_token=TURSO_AUTH_TOKEN,
-        )
-        _turso_conn.sync()
-        engine = get_engine(db_path=_REPLICA_PATH)
-        asyncio.create_task(_periodic_sync())
-    else:
-        engine = get_engine()
-
+    engine = get_engine(db_path=_DB_PATH)
     Base.metadata.create_all(engine)
     yield
 
@@ -145,10 +149,12 @@ def schema_endpoint(question: str = "general schema overview"):
 
 @app.post("/admin/sync")
 async def admin_sync(x_sync_secret: str = Header(default="")):
-    """Pull latest data from Turso into the local replica. Called by GitHub Actions after daily_refresh."""
+    """Re-download latest markets.db from GitHub Releases. Called by GitHub Actions after daily_refresh."""
     if SYNC_SECRET and x_sync_secret != SYNC_SECRET:
         raise HTTPException(status_code=403, detail="Invalid sync secret.")
-    if _turso_conn is None:
-        return {"status": "skipped", "reason": "Turso not configured — using local SQLite"}
-    await _do_sync()
-    return {"status": "ok", "message": "Synced from Turso."}
+    await asyncio.get_event_loop().run_in_executor(None, _download_db)
+    global engine
+    if engine:
+        engine.dispose()
+    engine = get_engine(db_path=_DB_PATH)
+    return {"status": "ok", "message": "Downloaded latest DB from GitHub Releases."}

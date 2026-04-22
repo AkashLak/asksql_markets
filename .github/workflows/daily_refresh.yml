@@ -9,7 +9,10 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+
+    permissions:
+      contents: write # required for gh release upload
 
     steps:
       - uses: actions/checkout@v4
@@ -20,14 +23,42 @@ jobs:
           cache: pip
 
       - name: Install refresh dependencies
-        run: pip install yfinance libsql-experimental rich python-dotenv pandas
+        run: pip install yfinance rich python-dotenv pandas
+
+      - name: Download DB from GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download db-latest \
+            --repo ${{ github.repository }} \
+            --pattern "markets.db.gz" \
+            --output markets.db.gz \
+            || echo "No existing release asset found — first run, will create."
+          if [ -f markets.db.gz ]; then
+            gunzip markets.db.gz
+            echo "Decompressed markets.db ($(du -sh markets.db | cut -f1))"
+          fi
 
       - name: Run daily refresh
         working-directory: backend
         env:
-          TURSO_URL: ${{ secrets.TURSO_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          DB_PATH: ${{ github.workspace }}/markets.db
         run: python -m data.daily_refresh
+
+      - name: Compress and upload DB to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gzip -k markets.db
+          gh release view db-latest --repo ${{ github.repository }} > /dev/null 2>&1 \
+            || gh release create db-latest \
+                --repo ${{ github.repository }} \
+                --title "DB: latest" \
+                --notes "Auto-updated daily by GitHub Actions." \
+                --prerelease
+          gh release upload db-latest markets.db.gz \
+            --repo ${{ github.repository }} \
+            --clobber
 
       - name: Trigger Render sync
         if: success()

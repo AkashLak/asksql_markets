@@ -2,15 +2,17 @@
 Incremental daily price + dividend refresh
 
 Fetches the last 7 days of data from yfinance for every S&P 500 ticker
-and upserts into Turso. Runs in ~3-5 minutes vs the full pipeline's 22 min.
+and upserts into the local SQLite database. Runs in ~3-5 minutes.
 
 Usage:
     cd backend
     python -m data.daily_refresh
+    DB_PATH=/path/to/markets.db python -m data.daily_refresh
 """
 
 import math
 import os
+import sqlite3
 import time
 from pathlib import Path
 
@@ -30,8 +32,7 @@ from rich.progress import (
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
 
-TURSO_URL = os.getenv("TURSO_URL", "")
-TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
+DB_PATH = Path(os.getenv("DB_PATH", str(Path(__file__).parent / "markets.db")))
 
 INTER_TICKER_DELAY = 0.5  # sec between tickers (lighter than full pipeline's 1.2s)
 COMMIT_EVERY = 20         # batch commits to reduce round-trips
@@ -40,20 +41,14 @@ console = Console()
 
 
 def main() -> None:
-    if not TURSO_URL or not TURSO_AUTH_TOKEN:
-        console.print("[red]Error:[/] TURSO_URL and TURSO_AUTH_TOKEN must be set in .env or environment.")
-        raise SystemExit(1)
-
-    import libsql_experimental as libsql
-
-    conn = libsql.connect(TURSO_URL, auth_token=TURSO_AUTH_TOKEN)
+    conn = sqlite3.connect(str(DB_PATH))
 
     tickers = [
         row[0]
         for row in conn.execute("SELECT ticker FROM companies ORDER BY ticker").fetchall()
     ]
     if not tickers:
-        console.print("[red]No tickers found in Turso. Run migrate_to_turso first.[/]")
+        console.print(f"[red]No tickers found in {DB_PATH}. Run the full pipeline first.[/]")
         raise SystemExit(1)
 
     console.print(f"[bold blue]Daily refresh[/] — {len(tickers)} tickers\n")

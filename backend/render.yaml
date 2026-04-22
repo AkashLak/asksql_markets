@@ -11,9 +11,11 @@ services:
         value: openai
       - key: OPENAI_API_KEY
         sync: false
-      - key: DB_DOWNLOAD_URL
-        sync: false
+      - key: GITHUB_REPO
+        value: AkashLak/asksql_markets
       - key: FRONTEND_URL
+        sync: false
+      - key: SYNC_SECRET
         sync: false
       - key: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
         value: python
