@@ -63,6 +63,12 @@ Your job is to convert a natural language question into a single valid SQLite SE
 SCHEMA CONTEXT (relevant tables for this question):
 {schema_context}
 
+DATA AVAILABLE:
+- prices: daily OHLCV from 2021 to present (2026)
+- financials: annual revenue/income/eps/margin for years 2022, 2023, 2024, 2025
+- dividends: full historical dividend payments
+Years 2021–2025 are ALL historical — never treat them as future.
+
 RULES:
 1. Return ONLY the raw SQL query — no explanation, no markdown fences, no comments.
 2. Only SELECT statements are allowed. Never write INSERT, UPDATE, DELETE, DROP, ALTER, or CREATE.

@@ -274,7 +274,7 @@ def load_schema_store() -> Chroma:
     )
 
 
-def get_schema_context(question: str, k: int = 3) -> str:
+def get_schema_context(question: str, k: int = 5) -> str:
     """
     Embed the question, retrieve top-k relevant schema docs, and return
     them as a formatted string ready to inject into a system prompt
