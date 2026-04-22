@@ -122,6 +122,20 @@ _SCHEMA_DOCS = [
     ),
     Document(
         page_content=(
+            "Example: 'Which company had the highest revenue in 2024?'\n"
+            "Note: 2024 is a HISTORICAL year — this is NOT a future prediction. Use f.year = 2024.\n"
+            "SQL:\n"
+            "SELECT c.company_name, c.ticker, f.revenue / 1e9 AS revenue_billions\n"
+            "FROM financials f\n"
+            "JOIN companies c ON f.ticker = c.ticker\n"
+            "WHERE f.year = 2024\n"
+            "ORDER BY f.revenue DESC\n"
+            "LIMIT 1;"
+        ),
+        metadata={"type": "example"},
+    ),
+    Document(
+        page_content=(
             "Example: 'What are the top 5 stocks by closing price today?'\n"
             "SQL:\n"
             "SELECT p.ticker, c.company_name, p.close\n"
