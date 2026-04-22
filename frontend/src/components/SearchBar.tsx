@@ -10,7 +10,7 @@ interface Props {
 const EXAMPLES = [
   'Top 5 stocks by most recent closing price?',
   'Highest revenue sector in 2024?',
-  'Apple dividend history',
+  'What dividends has Apple paid?',
   'Companies with profit margin above 30%?',
   'Average Tesla volume in 2023?',
 ]
