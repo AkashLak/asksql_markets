@@ -22,8 +22,14 @@ interface Props {
 export function ResultsTable({ columns, results }: Props) {
   if (results.length === 0) {
     return (
-      <div className="glass-card rounded-2xl px-5 py-10 text-center">
-        <p className="text-sm text-slate-500 italic">No rows returned.</p>
+      <div style={{
+        background: 'rgba(255,255,255,0.02)',
+        border: '0.5px solid rgba(255,255,255,0.08)',
+        borderRadius: '8px',
+        padding: '40px 20px',
+        textAlign: 'center',
+      }}>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>No rows returned.</p>
       </div>
     )
   }
@@ -38,30 +44,40 @@ export function ResultsTable({ columns, results }: Props) {
   )
 
   return (
-    <div className="glass-card rounded-2xl results-table">
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-        <div className="flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0c0 .621.504 1.125 1.125 1.125" />
-          </svg>
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Results</span>
-        </div>
-        <span className="text-xs text-slate-600">
+    <div className="results-table" style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: '0.5px solid rgba(255,255,255,0.08)',
+      borderRadius: '8px',
+      overflow: 'hidden',
+    }}>
+      {/* Row/col count */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        padding: '8px 16px',
+        borderBottom: '0.5px solid rgba(255,255,255,0.06)',
+      }}>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.22)' }}>
           {dataRows.length} row{dataRows.length !== 1 ? 's' : ''} · {columns.length} col{columns.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+      <div style={{ width: '100%', overflowX: 'auto' }}>
+        <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
           <thead>
-            <tr className="border-b border-white/[0.06]">
+            <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
               {columns.map((col, ci) => (
-                <th key={col}
-                  className={`px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider
-                              whitespace-nowrap bg-white/[0.02] sticky top-0
-                              ${isNumericCol[ci] ? 'text-right' : 'text-left'}`}
-                >
+                <th key={col} style={{
+                  padding: '9px 14px',
+                  fontSize: '10px',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.3)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  whiteSpace: 'nowrap',
+                  textAlign: isNumericCol[ci] ? 'right' : 'left',
+                  background: 'rgba(255,255,255,0.02)',
+                }}>
                   {col.replace(/_/g, ' ')}
                 </th>
               ))}
@@ -71,16 +87,20 @@ export function ResultsTable({ columns, results }: Props) {
             {dataRows.map((row, ri) => (
               <motion.tr
                 key={ri}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: ri * 0.025, duration: 0.2 }}
-                className="border-b border-white/[0.04] transition-colors"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: ri * 0.018, duration: 0.18 }}
+                style={{ borderBottom: '0.5px solid rgba(255,255,255,0.04)' }}
               >
                 {row.map((cell, ci) => (
-                  <td key={ci}
-                    className={`px-4 py-2.5 text-slate-300 whitespace-nowrap font-mono text-xs
-                                ${isNumericCol[ci] ? 'text-right tabular-nums' : 'text-left'}`}
-                  >
+                  <td key={ci} style={{
+                    padding: '8px 14px',
+                    color: 'rgba(255,255,255,0.6)',
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                    fontSize: '12px',
+                    textAlign: isNumericCol[ci] ? 'right' : 'left',
+                  }}>
                     {formatCell(cell)}
                   </td>
                 ))}
@@ -91,10 +111,12 @@ export function ResultsTable({ columns, results }: Props) {
       </div>
 
       {capMsg && (
-        <div className="px-5 py-2.5 bg-amber-950/30 border-t border-amber-900/40 flex items-center gap-2 text-xs text-amber-400">
-          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-          </svg>
+        <div style={{
+          padding: '10px 16px',
+          borderTop: '0.5px solid rgba(255,255,255,0.06)',
+          fontSize: '11px',
+          color: 'rgba(255,255,255,0.3)',
+        }}>
           {capMsg} — add a tighter filter or LIMIT to refine results.
         </div>
       )}

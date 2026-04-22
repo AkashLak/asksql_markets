@@ -3,6 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props { sql: string }
 
+const KEYWORDS = new Set([
+  'SELECT','FROM','WHERE','JOIN','LEFT','RIGHT','INNER','OUTER','CROSS','ON',
+  'GROUP','ORDER','BY','HAVING','LIMIT','OFFSET','AND','OR','NOT','IN','EXISTS',
+  'AS','DISTINCT','UNION','ALL','WITH','CASE','WHEN','THEN','ELSE','END',
+  'BETWEEN','LIKE','ILIKE','IS','NULL','ASC','DESC','INSERT','UPDATE','DELETE',
+  'CREATE','DROP','ALTER','TABLE','INTO','VALUES','SET','OVER','PARTITION',
+  'WINDOW','FETCH','NEXT','ROWS','ONLY','TOP','RECURSIVE',
+])
+
+const FUNCTIONS = new Set([
+  'COUNT','SUM','AVG','MAX','MIN','ROUND','COALESCE','NULLIF','DATE',
+  'STRFTIME','ABS','CAST','LENGTH','TRIM','UPPER','LOWER','SUBSTR',
+  'REPLACE','IIF','IFNULL','JULIANDAY','TYPEOF','PRINTF','INSTR',
+  'DATETIME','TIME','YEAR','MONTH','DAY',
+])
+
+function highlightSQL(sql: string): React.ReactNode[] {
+  const tokens = sql.split(/(\s+|[(),;*=<>!])/)
+  return tokens.map((token, i) => {
+    const upper = token.trim().toUpperCase()
+    if (upper && KEYWORDS.has(upper)) {
+      return <span key={i} style={{ color: '#7dd3fc' }}>{token}</span>
+    }
+    if (upper && FUNCTIONS.has(upper)) {
+      return <span key={i} style={{ color: '#a5f3fc' }}>{token}</span>
+    }
+    return token
+  })
+}
+
 export function SqlDisplay({ sql }: Props) {
   const [open, setOpen]     = useState(false)
   const [copied, setCopied] = useState(false)
@@ -15,61 +45,80 @@ export function SqlDisplay({ sql }: Props) {
   }
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      {/* Toggle header */}
+    <div style={{
+      background: '#111111',
+      border: '0.5px solid rgba(255,255,255,0.08)',
+      borderRadius: '8px',
+      overflow: 'hidden',
+    }}>
+      {/* Header toggle */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-3 hover:bg-white/[0.03] transition-colors"
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '11px 16px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+        }}
       >
-        <div className="flex items-center gap-2.5">
-          <span className="flex gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-          </span>
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Generated SQL</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <motion.button
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          {open ? 'Hide SQL' : 'Show SQL'}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
             onClick={copy}
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg transition-all
-              ${copied
-                ? 'bg-emerald-950/60 border border-emerald-800/50 text-emerald-400'
-                : 'border border-white/[0.08] text-slate-400 hover:text-white hover:border-white/20'
-              }`}
+            style={{
+              fontSize: '11px',
+              color: copied ? '#4ade80' : 'rgba(255,255,255,0.28)',
+              background: 'transparent',
+              border: '0.5px solid rgba(255,255,255,0.1)',
+              borderRadius: '4px',
+              padding: '3px 10px',
+              cursor: 'pointer',
+              transition: 'color 0.15s',
+            }}
           >
-            {copied ? (
-              <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>Copied</>
-            ) : (
-              <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>Copy</>
-            )}
-          </motion.button>
+            {copied ? 'Copied' : 'Copy'}
+          </button>
           <motion.span
             animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-slate-500"
+            transition={{ duration: 0.18 }}
+            style={{ color: 'rgba(255,255,255,0.25)', display: 'flex' }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
             </svg>
           </motion.span>
         </div>
       </button>
 
-      {/* Collapsible content */}
+      {/* Collapsible SQL body */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.22 }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="border-t border-white/[0.06]">
-              <pre className="p-5 text-sm text-emerald-300/90 bg-black/20 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap break-words">
-                {sql}
+            <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <pre style={{
+                padding: '16px',
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.65)',
+                background: 'transparent',
+                overflowX: 'auto',
+                lineHeight: 1.75,
+                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}>
+                {highlightSQL(sql)}
               </pre>
             </div>
           </motion.div>

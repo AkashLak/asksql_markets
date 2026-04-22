@@ -15,13 +15,27 @@ function isNonDataQuery(q: string) {
   return NON_QUERY_RE.test(q.trim()) || q.trim().split(/\s+/).length < 2
 }
 
-const viewAnim = {
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.32 } },
-  exit:    { opacity: 0, y: -8, transition: { duration: 0.18 } },
+const LOADING_MSGS = ['Generating SQL…', 'Querying financial data…', 'Analyzing results…', 'Almost there…']
+
+const fade = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.24 } },
+  exit:    { opacity: 0, y: -6, transition: { duration: 0.16 } },
 }
 
-const LOADING_MSGS = ['Generating SQL…', 'Querying financial data…', 'Analyzing results…', 'Almost there…']
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{
+      fontSize: '10px',
+      letterSpacing: '0.12em',
+      textTransform: 'uppercase',
+      color: 'rgba(255,255,255,0.25)',
+      marginBottom: '10px',
+    }}>
+      {children}
+    </p>
+  )
+}
 
 export default function App() {
   const [status, setStatus]             = useState<Status>('idle')
@@ -59,185 +73,186 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen relative bg-[#05050e]">
-      {/* Animated blobs */}
-      <div className="fixed inset-0 overflow-hidden z-0">
-        <div className="blob blob-1" />
-        <div className="blob blob-2" />
-        <div className="blob blob-3" />
-      </div>
-      {/* Grid overlay */}
-      <div className="grid-overlay" />
+    <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+      <AnimatePresence mode="wait">
 
-      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* ── IDLE: landing ── */}
+        {status === 'idle' && (
+          <motion.div key="idle" {...fade} style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 24px',
+          }}>
+            <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-        {/* Compact header - shown on non-idle */}
-        <AnimatePresence>
-          {status !== 'idle' && (
-            <motion.header
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.25 } }}
-              exit={{ opacity: 0 }}
-              className="sticky top-0 z-20 border-b border-white/[0.07] bg-[#05050e]/85 backdrop-blur"
-            >
-              <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-                <span className="text-sm font-bold text-slate-100 tracking-tight">
-                  AskSQL <span className="gradient-text">Markets</span>
-                </span>
-                <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live
-                </span>
+              {/* Wordmark */}
+              <p style={{ fontSize: '10px', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '28px' }}>
+                S&amp;P 500 · Real Financial Data · AI-Powered
+              </p>
+
+              {/* Logo */}
+              <h1 style={{ fontSize: '52px', fontWeight: 500, letterSpacing: '-2px', lineHeight: 1, marginBottom: '16px' }}>
+                <span style={{ color: '#ffffff' }}>Ask</span>
+                <span style={{ color: 'rgba(255,255,255,0.35)' }}>SQL</span>
+              </h1>
+
+              {/* Tagline */}
+              <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.4)', marginBottom: '40px', textAlign: 'center', lineHeight: 1.5 }}>
+                Query S&amp;P 500 data in plain English. No SQL required.
+              </p>
+
+              {/* Search bar */}
+              <div style={{ width: '100%', marginBottom: '48px' }}>
+                <SearchBar onSubmit={handleQuestion} loading={false} autoFocus />
               </div>
-            </motion.header>
-          )}
-        </AnimatePresence>
 
-        <AnimatePresence mode="wait">
-
-          {/* --- IDLE --- */}
-          {status === 'idle' && (
-            <motion.div key="idle" {...viewAnim}
-              className="min-h-screen flex flex-col items-center justify-center px-6"
-            >
-              <div className="w-full max-w-3xl flex flex-col items-center gap-6 text-center">
-
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1, transition: { delay: 0.05 } }}
-                  className="text-xs px-3 py-1 rounded-full bg-violet-950/70 border border-violet-600/40 text-violet-300 tracking-wide"
-                >
-                  S&amp;P 500 · Real financial data · AI-powered
-                </motion.span>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.45 } }}
-                >
-                  <h1 className="text-8xl font-black tracking-tight leading-[1.05]">
-                    <span className="gradient-text">AskSQL</span>
-                    <br />
-                    <span className="text-slate-200 text-6xl font-bold">Markets</span>
-                  </h1>
-                  <p className="mt-4 text-slate-500 text-base">
-                    Query S&amp;P 500 data in plain English. No SQL required.
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.4 } }}
-                  className="w-full mt-10"
-                >
-                  <SearchBar onSubmit={handleQuestion} loading={false} autoFocus />
-                </motion.div>
-
-                {/* Stats row */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, transition: { delay: 0.38 } }}
-                  className="w-full"
-                >
-                  <div className="border-t border-white/[0.07] pt-6 mt-8 flex justify-center gap-12">
-                    {[['503', 'companies'], ['5 yrs', 'price history'], ['~49k', 'dividend records'], ['4 yrs', 'financials']].map(([v, l]) => (
-                      <div key={l} className="text-center">
-                        <div className="text-white font-bold text-2xl tracking-tight">{v}</div>
-                        <div className="text-slate-500 text-sm mt-1">{l}</div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* --- LOADING --- */}
-          {status === 'loading' && (
-            <motion.div key="loading" {...viewAnim}
-              className="min-h-screen flex flex-col w-full items-center px-6 pt-8 pb-12"
-            >
-              <div className="w-full max-w-4xl flex flex-col gap-6">
-                <SearchBar onSubmit={handleQuestion} loading={true} defaultValue={lastQuestion} />
-                <div className="flex flex-col items-center justify-center gap-4 py-14">
-                  <div className="flex items-end gap-2">
-                    <span className="dot-1 w-3 h-3 rounded-full bg-violet-500" />
-                    <span className="dot-2 w-3 h-3 rounded-full bg-violet-400" />
-                    <span className="dot-3 w-3 h-3 rounded-full bg-violet-300" />
-                  </div>
-                  <AnimatePresence mode="wait">
-                    <motion.p key={msgIdx}
-                      initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.22 }}
-                      className="text-sm text-slate-400"
-                    >
-                      {LOADING_MSGS[msgIdx]}
-                    </motion.p>
-                  </AnimatePresence>
-                  <p className="text-xs text-slate-600 max-w-sm text-center">{lastQuestion}</p>
+              {/* Divider + stats */}
+              <div style={{ width: '100%', borderTop: '0.5px solid rgba(255,255,255,0.08)', paddingTop: '32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '48px' }}>
+                  {([['503', 'companies'], ['5 yrs', 'price history'], ['~49k', 'dividends'], ['4 yrs', 'financials']] as const).map(([v, l]) => (
+                    <div key={l} style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', letterSpacing: '-0.5px' }}>{v}</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.28)', marginTop: '5px' }}>{l}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </motion.div>
-          )}
 
-          {/* --- RESULTS --- */}
-          {(status === 'done' || status === 'error') && (
-            <motion.div key="results" {...viewAnim}
-              className="min-h-screen flex flex-col items-center w-full pt-8 pb-24"
-            >
-              <div className="w-full max-w-5xl mx-auto flex flex-col gap-5 px-8">
+            </div>
+          </motion.div>
+        )}
 
-                <SearchBar onSubmit={handleQuestion} loading={false} />
-
-                {status === 'error' && fetchError && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="glass-card rounded-2xl px-5 py-4"
+        {/* ── LOADING ── */}
+        {status === 'loading' && (
+          <motion.div key="loading" {...fade} style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '28px 24px',
+          }}>
+            <div style={{ width: '100%', maxWidth: '680px' }}>
+              <SearchBar onSubmit={handleQuestion} loading={true} defaultValue={lastQuestion} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', paddingTop: '100px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px' }}>
+                  <span className="dot-1" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'block' }} />
+                  <span className="dot-2" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'block' }} />
+                  <span className="dot-3" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'block' }} />
+                </div>
+                <AnimatePresence mode="wait">
+                  <motion.p key={msgIdx}
+                    initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}
+                    style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}
                   >
-                    <p className="text-sm font-semibold text-red-400 mb-1">Connection error</p>
-                    <p className="text-sm text-red-300/60">{fetchError}</p>
-                  </motion.div>
-                )}
-
-                {status === 'done' && result && (
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.04 }}
-                      className="flex justify-end"
-                    >
-                      <div className="max-w-xl bg-violet-600/20 border border-violet-500/30 rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-slate-200">
-                        {lastQuestion}
-                      </div>
-                    </motion.div>
-
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                      <AnswerCard explanation={result.explanation} success={result.success} error={result.error} />
-                    </motion.div>
-
-                    {result.columns.length > 0 && result.results.length >= 2 && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
-                        <DataChart columns={result.columns} results={result.results} question={lastQuestion} />
-                      </motion.div>
-                    )}
-
-                    {result.sql && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-                        <SqlDisplay sql={result.sql} />
-                      </motion.div>
-                    )}
-
-                    {result.columns.length > 0 && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-                        <ResultsTable columns={result.columns} results={result.results} />
-                      </motion.div>
-                    )}
-                  </>
-                )}
+                    {LOADING_MSGS[msgIdx]}
+                  </motion.p>
+                </AnimatePresence>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.18)', maxWidth: '380px', textAlign: 'center' }}>
+                  {lastQuestion}
+                </p>
               </div>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+        )}
 
-        </AnimatePresence>
-      </div>
+        {/* ── RESULTS / ERROR ── */}
+        {(status === 'done' || status === 'error') && (
+          <motion.div key="results" {...fade} style={{ minHeight: '100vh' }}>
+
+            {/* Sticky top bar */}
+            <div style={{
+              position: 'sticky', top: 0, zIndex: 20,
+              background: '#0a0a0a',
+              borderBottom: '0.5px solid rgba(255,255,255,0.08)',
+              padding: '10px 24px',
+            }}>
+              <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', display: 'block' }} />
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em' }}>Live</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <SearchBar onSubmit={handleQuestion} loading={false} />
+                </div>
+              </div>
+            </div>
+
+            {/* Page content */}
+            <div style={{ maxWidth: '680px', margin: '0 auto', padding: '40px 24px 100px' }}>
+
+              {/* Error state */}
+              {status === 'error' && fetchError && (
+                <div style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '0.5px solid rgba(255,255,255,0.08)',
+                  borderRadius: '8px',
+                  padding: '16px 20px',
+                }}>
+                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Connection error</p>
+                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>{fetchError}</p>
+                </div>
+              )}
+
+              {/* Results */}
+              {status === 'done' && result && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+                  {/* Question bubble */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{
+                      maxWidth: '480px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '0.5px solid rgba(255,255,255,0.1)',
+                      borderRadius: '10px',
+                      padding: '10px 16px',
+                      fontSize: '14px',
+                      color: 'rgba(255,255,255,0.65)',
+                      lineHeight: 1.5,
+                    }}>
+                      {lastQuestion}
+                    </div>
+                  </div>
+
+                  {/* Answer */}
+                  <section>
+                    <SectionLabel>Answer</SectionLabel>
+                    <AnswerCard explanation={result.explanation} success={result.success} error={result.error} />
+                  </section>
+
+                  {/* Chart */}
+                  {result.columns.length > 0 && result.results.length >= 2 && (
+                    <section>
+                      <DataChart columns={result.columns} results={result.results} question={lastQuestion} />
+                    </section>
+                  )}
+
+                  {/* SQL */}
+                  {result.sql && (
+                    <section>
+                      <SectionLabel>Generated SQL</SectionLabel>
+                      <SqlDisplay sql={result.sql} />
+                    </section>
+                  )}
+
+                  {/* Table */}
+                  {result.columns.length > 0 && (
+                    <section>
+                      <SectionLabel>Results</SectionLabel>
+                      <ResultsTable columns={result.columns} results={result.results} />
+                    </section>
+                  )}
+
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   )
 }

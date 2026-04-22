@@ -3,10 +3,8 @@ import {
   BarChart, Bar,
   LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
-  Cell, Label,
+  Label,
 } from 'recharts'
-
-const VIOLET_PALETTE = ['#7c3aed', '#6d28d9', '#8b5cf6', '#a78bfa', '#5b21b6', '#c4b5fd', '#9333ea']
 
 interface ChartConfig {
   type: 'bar' | 'line'
@@ -51,7 +49,6 @@ function truncateLabel(s: string): string {
   return s.length > 12 ? s.slice(0, 10) + '…' : s
 }
 
-//Derive a readable chart title from the column names
 function chartTitle(xKey: string, yKey: string): string {
   const fmt = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return `${fmt(yKey)} by ${fmt(xKey)}`
@@ -59,15 +56,22 @@ function chartTitle(xKey: string, yKey: string): string {
 
 const tooltipStyle = {
   contentStyle: {
-    background: '#0a0818',
-    border: '1px solid rgba(139,92,246,0.25)',
-    borderRadius: '10px',
+    background: '#161616',
+    border: '0.5px solid rgba(255,255,255,0.1)',
+    borderRadius: '6px',
     fontSize: '12px',
-    color: '#e2e8f0',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    color: 'rgba(255,255,255,0.75)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
   },
-  labelStyle: { color: '#a78bfa', fontWeight: 700, marginBottom: 2 },
-  cursor: { fill: 'rgba(109,40,217,0.08)' },
+  labelStyle: { color: 'rgba(255,255,255,0.45)', fontWeight: 500, marginBottom: 2 },
+  cursor: { fill: 'rgba(255,255,255,0.04)' },
+}
+
+const axisProps = {
+  stroke: 'transparent',
+  tick: { fill: 'rgba(255,255,255,0.2)', fontSize: 11 },
+  tickLine: false,
+  axisLine: false,
 }
 
 interface Props {
@@ -90,59 +94,71 @@ export function DataChart({ columns, results, question: _question }: Props) {
   const xLabel = cfg.xKey.replace(/_/g, ' ')
   const yLabel = cfg.yKey.replace(/_/g, ' ')
 
-  const axisProps = {
-    stroke: 'transparent',
-    tick: { fill: '#4b5563', fontSize: 11 },
-    tickLine: false,
-    axisLine: false,
-  }
-
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
-        <div className="flex items-center gap-2.5">
-          <span className="text-sm">{cfg.type === 'line' ? '📉' : '📊'}</span>
-          <span className="text-sm font-semibold text-slate-200">{title}</span>
-        </div>
-        <span className="text-xs px-2 py-0.5 rounded-md bg-violet-950/60 border border-violet-800/40 text-violet-400">
+    <div style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: '0.5px solid rgba(255,255,255,0.08)',
+      borderRadius: '8px',
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        borderBottom: '0.5px solid rgba(255,255,255,0.06)',
+      }}>
+        <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{title}</span>
+        <span style={{
+          fontSize: '10px',
+          color: 'rgba(255,255,255,0.25)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}>
           {cfg.type === 'line' ? 'trend' : 'bar chart'}
         </span>
       </div>
 
-      <div className="px-3 pt-5 pb-4">
-        <ResponsiveContainer width="100%" height={300}>
+      {/* Chart */}
+      <div style={{ padding: '16px 8px 12px' }}>
+        <ResponsiveContainer width="100%" height={280}>
           {cfg.type === 'line' ? (
-            <LineChart data={chartData} margin={{ top: 8, right: 24, left: 8, bottom: 36 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <LineChart data={chartData} margin={{ top: 8, right: 20, left: 8, bottom: 36 }}>
+              <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis dataKey="name" {...axisProps} tickFormatter={truncateLabel} interval="preserveStartEnd">
-                <Label value={xLabel} offset={-16} position="insideBottom" style={{ fill: '#4b5563', fontSize: 11 }} />
+                <Label value={xLabel} offset={-16} position="insideBottom" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </XAxis>
               <YAxis {...axisProps} tickFormatter={formatValue} width={52}>
-                <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: '#4b5563', fontSize: 11 }} />
+                <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </YAxis>
               <Tooltip {...tooltipStyle} formatter={(v) => [formatValue(Number(v)), yLabel]} />
               <Line
-                type="monotone" dataKey="value"
-                stroke="#8b5cf6" strokeWidth={2.5}
-                dot={{ r: 3.5, fill: '#7c3aed', strokeWidth: 0 }}
-                activeDot={{ r: 5.5, fill: '#c4b5fd', strokeWidth: 0 }}
+                type="monotone"
+                dataKey="value"
+                stroke="rgba(255,255,255,0.5)"
+                strokeWidth={1.5}
+                dot={{ r: 3, fill: 'rgba(255,255,255,0.4)', strokeWidth: 0 }}
+                activeDot={{ r: 4.5, fill: 'rgba(255,255,255,0.8)', strokeWidth: 0 }}
               />
             </LineChart>
           ) : (
-            <BarChart data={chartData} margin={{ top: 8, right: 24, left: 8, bottom: 36 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 8, bottom: 36 }}>
+              <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis dataKey="name" {...axisProps} tickFormatter={truncateLabel} interval={0}>
-                <Label value={xLabel} offset={-16} position="insideBottom" style={{ fill: '#4b5563', fontSize: 11 }} />
+                <Label value={xLabel} offset={-16} position="insideBottom" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </XAxis>
               <YAxis {...axisProps} tickFormatter={formatValue} width={52}>
-                <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: '#4b5563', fontSize: 11 }} />
+                <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </YAxis>
               <Tooltip {...tooltipStyle} formatter={(v) => [formatValue(Number(v)), yLabel]} />
-              <Bar dataKey="value" radius={[5, 5, 0, 0]} maxBarSize={56}>
-                {chartData.map((_, i) => (
-                  <Cell key={i} fill={VIOLET_PALETTE[i % VIOLET_PALETTE.length]} fillOpacity={0.88} />
-                ))}
-              </Bar>
+              <Bar
+                dataKey="value"
+                fill="rgba(255,255,255,0.15)"
+                activeBar={{ fill: 'rgba(255,255,255,0.3)' }}
+                radius={[3, 3, 0, 0]}
+                maxBarSize={52}
+              />
             </BarChart>
           )}
         </ResponsiveContainer>
