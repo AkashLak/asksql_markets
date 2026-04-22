@@ -43,11 +43,11 @@ _QUESTION_START_RE = re.compile(
 )
 
 def _normalize_question(q: str) -> str:
-    """Rewrite terse noun phrases as explicit data requests so the LLM doesn't CANNOT_ANSWER them."""
+    """Ensure every query ends with ? so gpt-4o-mini treats it as a question, not a CANNOT_ANSWER."""
     q = q.strip()
-    if q.endswith("?") or _QUESTION_START_RE.match(q):
-        return q
-    return f"Show me data about: {q}"
+    if not q.endswith("?"):
+        q = q + "?"
+    return q
 
 #Questions about future events or predictions can't be answered with historical data
 _FUTURE_RE = re.compile(
