@@ -27,6 +27,9 @@ urllib3==2.6.3
 websockets==16.0
 yfinance==1.2.2
 
+#--- Turso cloud database ---
+libsql-experimental
+
 #--- AI / Agent layer ---
 langchain
 langchain-openai
