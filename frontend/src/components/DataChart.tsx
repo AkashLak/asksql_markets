@@ -143,11 +143,18 @@ export function DataChart({ columns, results, question: _question }: Props) {
               />
             </LineChart>
           ) : (
-            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 8, bottom: 36 }}>
+            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 8, bottom: 8 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
-              <XAxis dataKey="name" {...axisProps} tickFormatter={truncateLabel} interval={0}>
-                <Label value={xLabel} offset={-16} position="insideBottom" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
-              </XAxis>
+              <XAxis
+                dataKey="name"
+                {...axisProps}
+                tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 11 }}
+                tickFormatter={truncateLabel}
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                height={70}
+              />
               <YAxis {...axisProps} tickFormatter={formatValue} width={52}>
                 <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </YAxis>
