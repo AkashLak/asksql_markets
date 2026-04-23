@@ -121,15 +121,15 @@ export function DataChart({ columns, results, question: _question }: Props) {
       </div>
 
       {/* Chart */}
-      <div style={{ padding: '16px 8px 12px' }}>
-        <ResponsiveContainer width="100%" height={280}>
+      <div style={{ padding: '16px 8px 12px', height: '300px' }}>
+        <ResponsiveContainer width="100%" height="100%">
           {cfg.type === 'line' ? (
             <LineChart data={chartData} margin={{ top: 8, right: 20, left: 8, bottom: 36 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis dataKey="name" {...axisProps} tickFormatter={truncateLabel} interval="preserveStartEnd">
                 <Label value={xLabel} offset={-16} position="insideBottom" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </XAxis>
-              <YAxis {...axisProps} tickFormatter={formatValue} width={52}>
+              <YAxis {...axisProps} tickFormatter={formatValue} width={58} domain={[0, 'auto']} tickCount={5}>
                 <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
               </YAxis>
               <Tooltip {...tooltipStyle} formatter={(v) => [formatValue(Number(v)), yLabel]} />
@@ -143,7 +143,7 @@ export function DataChart({ columns, results, question: _question }: Props) {
               />
             </LineChart>
           ) : (
-            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 8, bottom: 8 }}>
+            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 16, bottom: 8 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -155,9 +155,13 @@ export function DataChart({ columns, results, question: _question }: Props) {
                 textAnchor="end"
                 height={70}
               />
-              <YAxis {...axisProps} tickFormatter={formatValue} width={52}>
-                <Label value={yLabel} angle={-90} position="insideLeft" style={{ fill: 'rgba(255,255,255,0.18)', fontSize: 11 }} />
-              </YAxis>
+              <YAxis
+                {...axisProps}
+                tickFormatter={formatValue}
+                width={58}
+                domain={[0, 'auto']}
+                tickCount={5}
+              />
               <Tooltip {...tooltipStyle} formatter={(v) => [formatValue(Number(v)), yLabel]} />
               <Bar
                 dataKey="value"
