@@ -99,7 +99,6 @@ export function DataChart({ columns, results, question: _question }: Props) {
       background: 'rgba(255,255,255,0.02)',
       border: '0.5px solid rgba(255,255,255,0.08)',
       borderRadius: '8px',
-      overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
@@ -156,9 +155,12 @@ export function DataChart({ columns, results, question: _question }: Props) {
                 height={70}
               />
               <YAxis
-                {...axisProps}
+                stroke="transparent"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11, dx: -4 }}
                 tickFormatter={formatValue}
-                width={58}
+                width={64}
                 domain={[0, 'auto']}
                 tickCount={5}
               />
