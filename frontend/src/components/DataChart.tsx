@@ -142,7 +142,7 @@ export function DataChart({ columns, results, question: _question }: Props) {
               />
             </LineChart>
           ) : (
-            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 16, bottom: 8 }}>
+            <BarChart data={chartData} margin={{ top: 8, right: 20, left: 16, bottom: 24 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -153,11 +153,13 @@ export function DataChart({ columns, results, question: _question }: Props) {
                 angle={-45}
                 textAnchor="end"
                 height={70}
-              />
+              >
+                <Label value={xLabel} offset={-14} position="insideBottom" style={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} />
+              </XAxis>
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                width={64}
+                width={72}
                 domain={[0, 'auto']}
                 tickCount={5}
                 tick={({ x, y, payload }) => (
@@ -173,7 +175,9 @@ export function DataChart({ columns, results, question: _question }: Props) {
                     {formatValue(payload.value)}
                   </text>
                 )}
-              />
+              >
+                <Label value={yLabel} angle={-90} position="insideLeft" offset={10} style={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10, textAnchor: 'middle' }} />
+              </YAxis>
               <Tooltip {...tooltipStyle} formatter={(v) => [formatValue(Number(v)), yLabel]} />
               <Bar
                 dataKey="value"
