@@ -77,7 +77,7 @@ asksql_markets/
 │   │   │   ├── SqlDisplay.tsx       #Collapsible SQL block with copy button
 │   │   │   └── ResultsTable.tsx     #Animated results table
 │   │   ├── api.ts                   #Fetch wrapper (uses VITE_API_URL env var)
-│   │   └── index.css                #Glass morphism, blob animations, grid overlay
+│   │   └── index.css                #Minimal monochrome base styles, loading dot animation, table row styles
 │   ├── vercel.json
 │   └── vite.config.ts               #Proxies /ask /health /schema -> :8000 in dev
 └── README.md
@@ -108,7 +108,7 @@ Fixed generate→execute→explain pipeline (not a ReAct loop, and more reliable
 ```
 Question
   -> Pre-check: regex guard rejects greetings/non-data queries immediately
-  -> Chroma RAG (top-3 schema docs + Q->SQL examples)
+  -> Chroma RAG (top-5 schema docs + Q->SQL examples)
   -> LLM: generate SQL
   -> SQLite execute (retry up to 2x on error, feeding error back to LLM)
   -> LLM: explain results in plain English
@@ -207,7 +207,7 @@ The workflow can also be triggered manually from the GitHub Actions UI.
 | Provider | Pass | Usable | Avg latency |
 |----------|------|--------|-------------|
 | Ollama llama3.2 (local) | **84%** | **96%** | 5s |
-| OpenAI gpt-4o-mini (production) | **84%** | **96%** | 3s |
+| OpenAI gpt-4o-mini (production) | **88%** | **96%** | 3s |
 
 ```bash
 cd backend && source venv/bin/activate

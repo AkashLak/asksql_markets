@@ -12,6 +12,7 @@ requires larger models to follow reliably
 """
 
 import re
+import sys
 from datetime import datetime, timezone
 from typing import Any
 
@@ -272,8 +273,8 @@ def _log_query(
                 )
             )
             session.commit()
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"Warning: failed to log query to history: {exc}", file=sys.stderr)
 
 
 def _format_results_for_prompt(columns: list[str], results: list[list], max_rows: int = 20) -> str:
