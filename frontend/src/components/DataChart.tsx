@@ -155,14 +155,24 @@ export function DataChart({ columns, results, question: _question }: Props) {
                 height={70}
               />
               <YAxis
-                stroke="transparent"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11, dx: -4 }}
-                tickFormatter={formatValue}
                 width={64}
                 domain={[0, 'auto']}
                 tickCount={5}
+                tick={({ x, y, payload }) => (
+                  <text
+                    x={x}
+                    y={y}
+                    dy={4}
+                    textAnchor="end"
+                    fill="rgba(255,255,255,0.4)"
+                    fontSize={11}
+                    fontFamily="ui-monospace, SFMono-Regular, monospace"
+                  >
+                    {formatValue(payload.value)}
+                  </text>
+                )}
               />
               <Tooltip {...tooltipStyle} formatter={(v) => [formatValue(Number(v)), yLabel]} />
               <Bar
